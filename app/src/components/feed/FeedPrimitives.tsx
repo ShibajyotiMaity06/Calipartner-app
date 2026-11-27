@@ -63,11 +63,13 @@ export function useFeedResource<T>(load: () => Promise<T>) {
 export function FeedScreen({
   title,
   back,
+  onSettings,
   children,
   testID,
 }: {
   title: string;
   back?: () => void;
+  onSettings?: () => void;
   children: ReactNode;
   testID: string;
 }) {
@@ -90,6 +92,14 @@ export function FeedScreen({
         <Text variant="title1" accessibilityRole="header" style={styles.grow}>
           {title}
         </Text>
+        {onSettings ? (
+          <FeedAction
+            icon="settings-outline"
+            label={t('settingsV1.openSettings')}
+            onPress={onSettings}
+            testID="btn-feed-settings"
+          />
+        ) : null}
       </View>
       {children}
     </SafeAreaView>

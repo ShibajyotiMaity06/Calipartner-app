@@ -25,6 +25,23 @@ export interface SquadMember extends Record<keyof SquadNutrition, number | null>
   targets: (SquadNutrition & { steps: number; water?: number }) | null;
   height_cm: number | null;
   weight_kg: number | null;
+  city?: string | null;
+  training_style?: string | null;
+  privacy?: Record<string, unknown> | null;
+  rest_day_today?: boolean;
+  workout_today?: {
+    id: string;
+    name: string;
+    type: string;
+    duration_minutes: number;
+    exercise_count: number;
+    occurred_at: string;
+  } | null;
+  latest_activity?: {
+    kind: 'workout' | 'meal' | 'water';
+    label: string;
+    occurred_at: string;
+  } | null;
 }
 export interface RankedSquadMember extends SquadMember {
   score: number | null;
@@ -32,7 +49,23 @@ export interface RankedSquadMember extends SquadMember {
 }
 export interface SquadToday {
   room_id: string;
+  pinned_goal?: string | null;
+  latest_message?: {
+    id: string;
+    sender_name: string | null;
+    text: string | null;
+    message_type: string;
+    created_at: string;
+  } | null;
   members: RankedSquadMember[];
+}
+export interface SquadActivityItem {
+  id: string;
+  user_id: string;
+  nickname: string;
+  kind: 'workout' | 'water_goal' | 'member_joined' | 'meal_logged';
+  label: string;
+  occurred_at: string;
 }
 export interface SquadMeal extends SquadNutrition {
   section: 'breakfast' | 'lunch' | 'dinner' | 'snacks' | 'extra';

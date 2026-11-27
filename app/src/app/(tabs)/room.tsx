@@ -1,18 +1,24 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BackHandler,
-  Pressable,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
+  StyleSheet,
   View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  useWindowDimensions,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Avatar, Button, Text, homeLayout, radius, space } from '@calipartner/ui';
-import { useTheme as useAppearance } from '@calipartner/ui/theme';
-import type { RoomMemberSnapshot } from '@calipartner/core';
-import { roomCap } from '@calipartner/core';
+import { Button, Text, getTabBarHeight } from '@calipartner/ui';
+import {
+  Text as V1Text,
+  colors as v1Colors,
+  layout as v1Layout,
+  space as v1Space,
+} from '@calipartner/ui/v1';
+import { roomCap, type RankedSquadMember, type RoomMemberSnapshot } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRooms } from '@/hooks/useRooms';
 import { useRoomSnapshot } from '@/hooks/useRoomSnapshot';
@@ -21,47 +27,51 @@ import { useRoomRequests } from '@/hooks/useRoomRequests';
 import { useFriends } from '@/hooks/useFriends';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useRoomChat } from '@/hooks/useRoomChat';
-import { useSquadToday } from '@/hooks/useSquad';
+import { useSquadActivity, useSquadToday } from '@/hooks/useSquad';
 import { closeBrowserModalsThen, useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { ChatView } from '@/components/chat';
 import {
+  BlockUserModal,
   DormantWaitingState,
   InviteUserModal,
   JoinByCodeModal,
   LockedRoomPausedState,
   PaywallModal,
+  ReportModal,
   RequestsInboxModal,
   RoomHeader,
+  RoomProgressView,
   RoomSettingsModal,
-  BlockUserModal,
-  ReportModal,
   type RoomSegment,
 } from '@/components/rooms';
 import { SquadConnectModal } from '@/components/rooms/SquadConnectModal';
-import { SquadMemberPicker } from '@/components/rooms/SquadMemberPicker';
-import { SquadPersonPanel } from '@/components/rooms/SquadPersonPanel';
 import { SquadVisibilityModal } from '@/components/rooms/SquadVisibilityModal';
 import {
-  PeopleSelector,
-  SquadLeaderboard,
-  goalName,
-  memberName,
-  useSquadStyles,
-} from '@/components/rooms/SquadViews';
+  SquadActivitySectionV1,
+  SquadChatCardV1,
+  SquadCompareCardV1,
+  SquadInviteCardV1,
+  SquadLeaderboardV1,
+  SquadMemberSheetV1,
+  SquadSwitcherSheetV1,
+} from '@/components/rooms/SquadV1Components';
 import { t } from '@/i18n';
 
 type ModalName =
-  'connect' | 'join' | 'settings' | 'privacy' | 'invite' | 'inbox' | 'paywall' | null;
-export default function RoomScreen() {
-  const styles = useSquadStyles();
-  const { colors: dark } = useAppearance();
+  'connect' | 'join' | 'settings' | 'privacy' | 'invite' | 'inbox' | 'paywall' | 'switcher' | null;
 
+const STICKY_HEADER_SCROLL_Y = 72;
+
+export default function RoomScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { fontScale } = useWindowDimensions();
   const { user, profile } = useAuth();
-  const roomsHook = useRooms(),
-    requests = useRoomRequests(),
-    friends = useFriends();
+  const roomsHook = useRooms();
+  const requests = useRoomRequests();
+  const friends = useFriends();
   const { hasActiveAccess, currentTier } = useSubscription();
+
   const params = useLocalSearchParams<{
     room?: string;
     action?: string;
@@ -69,6 +79,7 @@ export default function RoomScreen() {
     mention?: string;
     returnTo?: string;
   }>();
+
   const [visible, setVisible] = useState(false);
   useFocusEffect(
     useCallback(() => {
@@ -76,27 +87,32 @@ export default function RoomScreen() {
       return () => setVisible(false);
     }, []),
   );
+
   const room = params.room
     ? (roomsHook.rooms.find((item) => item.id === params.room) ?? null)
     : (roomsHook.rooms[0] ?? null);
   const roomId = room?.id ?? null;
-  const {
-    snapshot,
-    error: snapshotError,
-    refresh: refreshSnapshot,
-  } = useRoomSnapshot(roomId, visible, { pageSize: 20 });
+
+  const { snapshot, refresh: refreshSnapshot } = useRoomSnapshot(roomId, visible, { pageSize: 20 });
   const squad = useSquadToday(roomId, visible);
+  const activity = useSquadActivity(roomId, visible);
   const actions = useRoomActions(roomId);
-  const [segment, setSegment] = useState<RoomSegment>('today'),
-    [modal, setModal] = useState<ModalName>(null);
-  const [personId, setPersonId] = useState<string | null>(null);
-  const [picker, setPicker] = useState<'left' | 'right' | 'person' | null>(null),
-    [leftId, setLeftId] = useState<string | null>(null),
-    [rightId, setRightId] = useState<string | null>(null);
-  const [report, setReport] = useState<RoomMemberSnapshot | null>(null),
-    [block, setBlock] = useState<RoomMemberSnapshot | null>(null);
+
+  const [segment, setSegment] = useState<RoomSegment>('today');
+  const [modal, setModal] = useState<ModalName>(null);
+  const [picker, setPicker] = useState<'left' | 'right' | null>(null);
+  const [leftId, setLeftId] = useState<string | null>(null);
+  const [rightId, setRightId] = useState<string | null>(null);
+  const [activeMemberSheet, setActiveMemberSheet] = useState<RankedSquadMember | null>(null);
+  const [chatPrefill, setChatPrefill] = useState<string | null>(null);
+  const [chatTypingName, setChatTypingName] = useState<string | null>(null);
+  const [scrolledHeader, setScrolledHeader] = useState(false);
+  const [report, setReport] = useState<RoomMemberSnapshot | null>(null);
+  const [block, setBlock] = useState<RoomMemberSnapshot | null>(null);
+
   const segments = useRef<RoomSegment[]>([]);
   const entryFromHome = useRef(false);
+
   const closeEntry = () => {
     const returnHome = entryFromHome.current;
     entryFromHome.current = false;
@@ -104,102 +120,99 @@ export default function RoomScreen() {
     router.setParams({ returnTo: undefined });
     if (returnHome) closeBrowserModalsThen(() => router.navigate('/(tabs)/today'));
   };
+
   useEffect(() => {
     router.setParams({ chat: visible && segment === 'chat' ? 'open' : undefined });
   }, [router, visible, segment]);
+
   const selectSegment = (next: RoomSegment) => {
     if (next === segment) return;
     segments.current.push(segment);
+    setScrolledHeader(false);
     setSegment(next);
   };
+
   useEffect(() => {
     setSegment('today');
     segments.current = [];
     setLeftId(null);
     setRightId(null);
     setPicker(null);
-    setPersonId(null);
+    setActiveMemberSheet(null);
+    setScrolledHeader(false);
   }, [roomId]);
+
   useEffect(() => {
     if (params.action === 'create') {
       entryFromHome.current = params.returnTo === 'home';
       setModal('connect');
       router.setParams({ action: undefined });
+    } else if (params.action === 'join') {
+      entryFromHome.current = params.returnTo === 'home';
+      setModal('join');
+      router.setParams({ action: undefined });
     }
   }, [params.action, params.returnTo, router]);
+
   useEffect(() => {
-    if (params.room && params.room !== roomId) return;
-    if (params.tab === 'chat' || params.tab === 'progress' || params.tab === 'today') {
-      if (params.tab !== segment) segments.current.push(segment);
-      setSegment(params.tab);
+    if (params.tab === 'chat' && roomId) {
+      setSegment('chat');
       router.setParams({ tab: undefined });
     }
-  }, [params.tab, params.room, roomId, router, segment]);
+  }, [params.tab, roomId, router]);
+
   useBrowserModalBack(
-    modal === 'join' ||
-      modal === 'settings' ||
-      modal === 'inbox' ||
-      modal === 'invite' ||
-      Boolean(report || block),
+    modal !== null || report !== null || block !== null || activeMemberSheet !== null,
     () => {
-      if (modal === 'join') closeEntry();
-      else setModal(null);
-      setReport(null);
-      setBlock(null);
+      if (activeMemberSheet) setActiveMemberSheet(null);
+      else if (modal === 'connect' || modal === 'join') closeEntry();
+      else {
+        setModal(null);
+        setReport(null);
+        setBlock(null);
+      }
     },
   );
-  useBrowserModalBack(visible && segments.current.length > 0, () => {
-    setSegment(segments.current.pop() ?? 'today');
+
+  useEffect(() => {
+    if (!visible || segment === 'today') return;
+    return BackHandler.addEventListener('hardwareBackPress', () => {
+      if (params.returnTo === 'chat') {
+        router.setParams({ returnTo: undefined, chat: undefined });
+        router.navigate('/(tabs)/chat' as Href);
+        return true;
+      }
+      setSegment(segments.current.pop() ?? 'today');
+      return true;
+    }).remove;
+  }, [visible, segment, params.returnTo, router]);
+
+  const waiting = room?.state === 'dormant' || (room ? room.member_count < 2 : false);
+  const locked = room?.state === 'locked';
+  const canChat = Boolean(roomId && room?.state === 'active' && !waiting && !locked);
+  const preview = useRoomChat(roomId, visible && canChat && segment !== 'chat', {
+    userId: user?.id,
+    markRead: false,
   });
-  useFocusEffect(
-    useCallback(() => {
-      const listener = BackHandler.addEventListener('hardwareBackPress', () => {
-        const previous = segments.current.pop();
-        if (previous) {
-          setSegment(previous);
-          return true;
-        }
-        // Let the navigator return to the actual previous route or visited tab.
-        return false;
-      });
-      return () => listener.remove();
-    }, []),
-  );
-  const refreshRooms = roomsHook.refresh,
-    refreshSquad = squad.refresh,
-    refreshRequests = requests.refresh;
-  const snapshotName = snapshot?.room?.name;
-  useEffect(() => {
-    // The existing room subscription observes renames made on another device.
-    if (snapshotName && snapshotName !== room?.name) void refreshRooms();
-  }, [snapshotName, room?.name, refreshRooms]);
+
   const refresh = useCallback(async () => {
-    await Promise.all([refreshRooms(), refreshSnapshot(), refreshSquad(), refreshRequests()]);
-  }, [refreshRooms, refreshSnapshot, refreshSquad, refreshRequests]);
-  const waiting = Boolean(room && (room.state === 'dormant' || room.member_count < 2));
+    await Promise.all([
+      roomsHook.refresh(),
+      refreshSnapshot(),
+      squad.refresh(),
+      activity.refresh(),
+      requests.refresh(),
+      friends.refresh(),
+    ]);
+  }, [activity, friends, refreshSnapshot, requests, roomsHook, squad]);
+
   useEffect(() => {
-    void refreshSquad();
-  }, [room?.member_count, refreshSquad]);
-  const locked =
-    room?.state === 'locked' || room?.state === 'archived' || snapshotError?.code === 'ROOM_LOCKED';
-  useEffect(() => {
-    if (!visible || !waiting || !roomId) return;
-    const timer = setInterval(() => {
-      void refreshSnapshot();
-      void refreshRooms();
-    }, 5000);
+    if (!waiting) return;
+    const timer = setInterval(() => void refresh(), 5000);
     return () => clearInterval(timer);
-  }, [visible, waiting, roomId, refreshSnapshot, refreshRooms]);
-  const canChat = !waiting && !locked;
-  const preview = useRoomChat(
-    canChat && segment !== 'chat' ? roomId : null,
-    visible && canChat && segment !== 'chat',
-    { userId: user?.id, markRead: false },
-  );
+  }, [waiting, refresh]);
+
   const members = squad.data?.members ?? [];
-  const otherMembers = members.filter((member) => !member.is_self);
-  const selectedPerson =
-    otherMembers.find((member) => member.user_id === personId) ?? otherMembers[0];
   const left =
     members.find((member) => member.user_id === leftId) ??
     members.find((member) => member.is_self) ??
@@ -208,49 +221,85 @@ export default function RoomScreen() {
     members.find((member) => member.user_id === rightId && member.user_id !== left?.user_id) ??
     members.find((member) => member.user_id !== left?.user_id);
   const managementMembers = useMemo(() => snapshot?.members ?? [], [snapshot?.members]);
+
   const openPerson = (memberId: string) => {
-    if (roomId)
+    if (roomId) {
       router.push(
         ('/squad/person?room=' +
           encodeURIComponent(roomId) +
           '&member=' +
           encodeURIComponent(memberId)) as Href,
       );
+    }
   };
+
+  const openComparePair = (targetLeftId: string, targetRightId: string) => {
+    if (!room) return;
+    router.push(
+      ('/squad/compare?room=' +
+        encodeURIComponent(room.id) +
+        '&left=' +
+        encodeURIComponent(targetLeftId) +
+        '&right=' +
+        encodeURIComponent(targetRightId)) as Href,
+    );
+  };
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = event.nativeEvent.contentOffset.y;
+    setScrolledHeader(y > STICKY_HEADER_SCROLL_Y);
+  };
+
+  const bottomSpacer = getTabBarHeight(fontScale) + insets.bottom + v1Space.lg;
+
   return (
-    <SafeAreaView style={styles.screen} testID="screen-room">
+    <SafeAreaView edges={['top', 'left', 'right']} style={localStyles.screen} testID="screen-room">
       <RoomHeader
         onBack={() => {
           if (params.returnTo === 'chat') {
             router.setParams({ returnTo: undefined, chat: undefined });
             router.navigate('/(tabs)/chat' as Href);
-          } else setSegment(segments.current.pop() ?? 'today');
+          } else {
+            setSegment(segments.current.pop() ?? 'today');
+          }
         }}
         currentRoom={room}
         allRooms={roomsHook.rooms}
+        currentUserId={user?.id}
         pendingRequestsCount={requests.incoming.length + (friends.inbox?.incoming.length ?? 0)}
         activeSegment={segment}
         chatUnreadCount={canChat ? preview.unreadCount : 0}
+        typingText={segment === 'chat' ? chatTypingName : null}
+        collapsed={segment !== 'chat' && scrolledHeader && !waiting && !locked && Boolean(room)}
         isWaiting={waiting}
         onSelectSegment={selectSegment}
         onOpenInbox={() => setModal('inbox')}
         onOpenSettings={() => setModal('settings')}
         onOpenPrivacy={() => setModal('privacy')}
+        onOpenSwitcher={() => setModal('switcher')}
         onSwitchRoom={(item) => {
           router.setParams({ room: item.id, mention: undefined });
         }}
         onCreateOrJoin={() => setModal('connect')}
       />
+
       {segment === 'chat' && room ? (
-        <View style={styles.flex}>
+        <View style={localStyles.flex}>
           {!canChat ? (
-            <View style={styles.content}>
-              <Text>{t(waiting ? 'rooms.dormant.subtitle' : 'chat.pausedTitle')}</Text>
+            <View style={localStyles.emptyStateCard}>
+              <V1Text variant="body" color="textMid">
+                {t(waiting ? 'rooms.dormant.subtitle' : 'chat.pausedTitle')}
+              </V1Text>
             </View>
           ) : (
             <ChatView
               key={room.id}
               roomId={room.id}
+              roomName={room.name}
+              pinnedGoal={squad.data?.pinned_goal ?? room.pinned_goal}
+              prefillText={chatPrefill}
+              onPrefillConsumed={() => setChatPrefill(null)}
+              onTypingSummaryChange={setChatTypingName}
               isVisible={visible}
               options={{
                 userId: user?.id,
@@ -268,18 +317,24 @@ export default function RoomScreen() {
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={handleScroll}
+          contentContainerStyle={[localStyles.scrollContent, { paddingBottom: bottomSpacer }]}
           refreshControl={
             <RefreshControl
               refreshing={roomsHook.loading || squad.loading}
               onRefresh={() => void refresh()}
+              tintColor={v1Colors.apricot}
             />
           }
         >
           {roomsHook.loading && !room ? (
-            <Text>{t('common.loading')}</Text>
+            <V1Text variant="body" color="textLo">
+              {t('common.loading')}
+            </V1Text>
           ) : roomsHook.error && !room ? (
-            <View style={styles.card}>
+            <View style={localStyles.emptyStateCard}>
               <Text accessibilityRole="alert">{t('common.errorBody')}</Text>
               <Button
                 variant="secondary"
@@ -289,7 +344,7 @@ export default function RoomScreen() {
               />
             </View>
           ) : !room ? (
-            <View style={styles.card}>
+            <View style={localStyles.emptyStateCard}>
               <Text variant="title1">{t('socialUpdate.connect')}</Text>
               <Text>{t('socialUpdate.choose')}</Text>
               <Button
@@ -302,150 +357,118 @@ export default function RoomScreen() {
             <LockedRoomPausedState onKeepRoomGoing={() => setModal('paywall')} />
           ) : waiting ? (
             <DormantWaitingState roomCode={room.code} />
+          ) : squad.error ? (
+            <View style={localStyles.emptyStateCard}>
+              <Text accessibilityRole="alert">{t('common.errorBody')}</Text>
+              <Button
+                variant="secondary"
+                label={t('common.retry')}
+                onPress={() => void squad.refresh()}
+                testID="retry-squad-today"
+              />
+            </View>
+          ) : squad.loading && !squad.data ? (
+            <V1Text variant="body" color="textLo">
+              {t('common.loading')}
+            </V1Text>
+          ) : segment === 'progress' ? (
+            <View style={localStyles.stack}>
+              <SquadLeaderboardV1
+                members={members}
+                onPressMember={(member) => openPerson(member.user_id)}
+              />
+              <RoomProgressView roomId={room.id} />
+            </View>
           ) : (
-            <>
-              {squad.error ? (
-                <View style={styles.card}>
-                  <Text accessibilityRole="alert">{t('common.errorBody')}</Text>
-                  <Button
-                    variant="secondary"
-                    label={t('common.retry')}
-                    onPress={() => void squad.refresh()}
-                    testID="retry-squad-today"
-                  />
-                </View>
-              ) : squad.loading && !squad.data ? (
-                <Text>{t('common.loading')}</Text>
-              ) : (
-                <>
-                  <View style={styles.stack}>
-                    <View style={styles.spread}>
-                      <Text variant="heading">
-                        {t(segment === 'progress' ? 'squadDesign.today' : 'squadDesign.leaders')}
-                      </Text>
-                    </View>
-                    <Text variant="bodyS">{t('squadDesign.ownGoals')}</Text>
-                    <SquadLeaderboard
-                      members={members}
-                      limit={segment === 'progress' ? undefined : members.length === 2 ? 2 : 3}
-                      onMember={(member) => openPerson(member.user_id)}
-                    />
-                  </View>
-                  {segment === 'today' && left && right && (
-                    <View style={[styles.card, { position: 'relative', zIndex: 100 }]}>
-                      <Text variant="heading">{t('squadDesign.compareTwo')}</Text>
-                      <Text variant="bodyS">{t('squadDesign.compareHint')}</Text>
-                      <PeopleSelector
-                        left={left}
-                        right={right}
-                        members={members}
-                        open={picker === 'person' ? null : picker}
-                        onChoose={(side) =>
-                          setPicker((current) => (current === side ? null : side))
-                        }
-                        onSelect={(side, id) => {
-                          setLeftId(side === 'left' ? id : left.user_id);
-                          setRightId(side === 'right' ? id : right.user_id);
-                          setPicker(null);
-                        }}
-                      />
-                      <Button
-                        label={t('squadDesign.compareNames', {
-                          left: memberName(left),
-                          right: memberName(right),
-                        })}
-                        onPress={() =>
-                          router.push(
-                            ('/squad/compare?room=' +
-                              encodeURIComponent(room.id) +
-                              '&left=' +
-                              encodeURIComponent(left.user_id) +
-                              '&right=' +
-                              encodeURIComponent(right.user_id)) as Href,
-                          )
-                        }
-                        testID="open-two-person-compare"
-                      />
-                    </View>
-                  )}
-                  {segment === 'today' && selectedPerson && roomId && (
-                    <View style={styles.stack} testID="squad-person-inline">
-                      <Text variant="heading">{t('fixNovember.person')}</Text>
-                      <Text variant="bodyS">{t('fixNovember.personHint')}</Text>
-                      <Pressable
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: space[3],
-                          backgroundColor: dark.s1,
-                          borderRadius: radius.control,
-                          borderWidth: 1,
-                          borderColor: dark.hairlineLit,
-                          minHeight: homeLayout.touchSize,
-                        }}
-                        onPress={() =>
-                          setPicker((current) => (current === 'person' ? null : 'person'))
-                        }
-                        accessibilityRole="button"
-                        accessibilityLabel={memberName(selectedPerson)}
-                        testID="squad-choose-person"
-                        aria-label={memberName(selectedPerson)}
-                        {...({ label: memberName(selectedPerson) } as any)}
-                      >
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            gap: space[2],
-                            flex: 1,
-                          }}
-                        >
-                          <Avatar
-                            name={memberName(selectedPerson)}
-                            uri={selectedPerson.avatar_url ?? undefined}
-                            size="sm"
-                            identityHue={selectedPerson.is_self ? 'iris' : 'teal'}
-                          />
-                          <View style={{ flex: 1 }}>
-                            <Text variant="heading" color={dark.textHi}>
-                              {memberName(selectedPerson)}
-                            </Text>
-                            <Text variant="micro" color={dark.textMid}>
-                              {goalName(selectedPerson)}
-                            </Text>
-                          </View>
-                        </View>
-                        <Ionicons
-                          name={picker === 'person' ? 'chevron-up' : 'chevron-down'}
-                          size={18}
-                          color={dark.textMid}
-                        />
-                      </Pressable>
-                      {picker === 'person' && (
-                        <SquadMemberPicker
-                          visible
-                          members={otherMembers}
-                          excludedId=""
-                          selectedId={selectedPerson?.user_id ?? ''}
-                          onSelect={setPersonId}
-                          onClose={() => setPicker(null)}
-                        />
-                      )}
-                      <SquadPersonPanel
-                        roomId={roomId}
-                        person={selectedPerson}
-                        members={members}
-                        visible={visible}
-                      />
-                    </View>
-                  )}
-                </>
-              )}
-            </>
+            <View style={localStyles.stack}>
+              <SquadChatCardV1
+                latestMessage={squad.data?.latest_message}
+                unreadCount={canChat ? preview.unreadCount : 0}
+                onPress={() => selectSegment('chat')}
+              />
+
+              <SquadLeaderboardV1
+                members={members}
+                limit={members.length <= 5 ? undefined : 3}
+                onPressMember={(member) => setActiveMemberSheet(member)}
+              />
+
+              {left && right ? (
+                <SquadCompareCardV1
+                  left={left}
+                  right={right}
+                  members={members}
+                  openSide={picker}
+                  onToggleSide={(side) => setPicker((curr) => (curr === side ? null : side))}
+                  onSelectSide={(side, id) => {
+                    setLeftId(side === 'left' ? id : left.user_id);
+                    setRightId(side === 'right' ? id : right.user_id);
+                    setPicker(null);
+                  }}
+                  onSwap={() => {
+                    const prevLeft = left.user_id;
+                    const prevRight = right.user_id;
+                    setLeftId(prevRight);
+                    setRightId(prevLeft);
+                  }}
+                  onCompare={() => openComparePair(left.user_id, right.user_id)}
+                />
+              ) : null}
+
+              <SquadActivitySectionV1
+                items={activity.data ?? []}
+                loading={activity.loading}
+                members={members}
+                onPressMember={(member) => setActiveMemberSheet(member)}
+              />
+
+              <SquadInviteCardV1
+                room={room}
+                currentUserId={user?.id}
+                onInviteModal={() => setModal('invite')}
+              />
+            </View>
           )}
         </ScrollView>
       )}
+
+      <SquadMemberSheetV1
+        visible={Boolean(activeMemberSheet)}
+        roomId={roomId}
+        member={activeMemberSheet}
+        onClose={() => setActiveMemberSheet(null)}
+        onCompare={(member) => {
+          setActiveMemberSheet(null);
+          const selfOrOther =
+            members.find((m) => m.is_self && m.user_id !== member.user_id) ??
+            members.find((m) => m.user_id !== member.user_id);
+          if (selfOrOther) {
+            openComparePair(selfOrOther.user_id, member.user_id);
+          }
+        }}
+        onMessage={(member) => {
+          setActiveMemberSheet(null);
+          setChatPrefill(`@${member.username} `);
+          selectSegment('chat');
+        }}
+      />
+
+      <SquadSwitcherSheetV1
+        visible={modal === 'switcher'}
+        rooms={roomsHook.rooms}
+        currentRoomId={roomId}
+        currentUserId={user?.id}
+        onClose={() => setModal(null)}
+        onSelectRoom={(item) => router.setParams({ room: item.id, mention: undefined })}
+        onCreateSquad={() => setModal('connect')}
+        onJoinByCode={async (code) => {
+          const result = await roomsHook.joinByCode(code);
+          if (result?.room_id) {
+            router.setParams({ room: result.room_id, mention: undefined, returnTo: undefined });
+          }
+        }}
+      />
+
       {modal === 'connect' && (
         <SquadConnectModal
           visible
@@ -579,3 +602,24 @@ export default function RoomScreen() {
     </SafeAreaView>
   );
 }
+
+const localStyles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: v1Colors.bg0,
+  },
+  flex: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: v1Layout.screenPaddingX,
+    paddingTop: v1Space.xs,
+  },
+  stack: {
+    gap: v1Space.lg,
+  },
+  emptyStateCard: {
+    padding: v1Space.lg,
+    gap: v1Space.md,
+  },
+});

@@ -1,5 +1,4 @@
-import { visualPrimitives } from '@calipartner/ui/tokens';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -8,14 +7,31 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  TextInput,
   View,
 } from 'react-native';
-import { Text, homeLayout } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
+import { homeLayout } from '@calipartner/ui';
+import {
+  ChevronDownIcon,
+  CloseIcon,
+  IconButton,
+  PinIcon,
+  PrimaryButton,
+  SecondaryButton,
+  Sheet,
+  Text as V1Text,
+  borders,
+  colors as v1Colors,
+  fonts,
+  radius as v1Radius,
+  space as v1Space,
+} from '@calipartner/ui/v1';
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import type { ChatAttachment, ChatMessage } from '@/types/chat';
 import { useRoomChat, type UseRoomChatOptions } from '@/hooks/useRoomChat';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { useChatTyping } from '@/hooks/useChatTyping';
 import { generateClientUuid } from '@/services/foodService';
 import {
   requestUploadPresignedUrl,
@@ -25,8 +41,13 @@ import {
 import { getSupabase } from '@/lib/supabase';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
-import { useChatTyping } from '@/hooks/useChatTyping';
+import {
+  getChatReactions,
+  markSquadMentionSeen,
+  setRoomPinnedGoal,
+  toggleChatReaction,
+  type ChatReactionState,
+} from '@/services/squadService';
 import { ChatComposer } from './ChatComposer';
 import { ChatImageViewerModal } from './ChatImageViewerModal';
 import { type SelectedMediaItem } from './ChatMediaPickerModal';
@@ -34,12 +55,16 @@ import { ChatMessageBubble } from './ChatMessageBubble';
 import { ChatMessageMenuModal } from './ChatMessageMenuModal';
 import { ChatReportModal } from './ChatReportModal';
 import { ChatTermsModal } from './ChatTermsModal';
-import { markSquadMentionSeen } from '@/services/squadService';
 
 export interface ChatViewProps {
   focusedMentionId?: string;
   mentionMembers?: { user_id: string; username: string; nickname: string }[];
   roomId: string | null;
+  roomName?: string | null;
+  pinnedGoal?: string | null;
+  prefillText?: string | null;
+  onPrefillConsumed?: () => void;
+  onTypingSummaryChange?: (summary: string | null) => void;
   isVisible?: boolean;
   options?: UseRoomChatOptions;
   isLocked?: boolean;
@@ -50,16 +75,18 @@ export function ChatView({
   focusedMentionId,
   mentionMembers = [],
   roomId,
+  roomName,
+  pinnedGoal: initialPinnedGoal,
+  prefillText,
+  onPrefillConsumed,
+  onTypingSummaryChange,
   isVisible = true,
   options = {},
   isLocked: isLockedProp,
   testID = 'room-chat-view',
 }: ChatViewProps) {
-  const { colors } = useTheme();
-  const { isOnline } = useNetworkStatus();
   const { hasActiveAccess, currentTier } = useSubscription();
 
-  // Core Chat Hook
   const {
     messages,
     loading,
@@ -91,7 +118,6 @@ export function ChatView({
     ['PLUS_REQUIRED', 'NOT_ROOM_MEMBER', 'NOT_AUTHORIZED'].includes(error?.code ?? '');
 
   const [mediaReadError, setMediaReadError] = useState(false);
-  // Active interaction modals state
   const [activeImageAttachment, setActiveImageAttachment] = useState<ChatAttachment | null>(null);
   const [activeMenuMessage, setActiveMenuMessage] = useState<ChatMessage | null>(null);
   const [reportTargetMessageId, setReportTargetMessageId] = useState<string | null>(null);
@@ -100,13 +126,48 @@ export function ChatView({
   const [mentionError, setMentionError] = useState(false);
   const [mentionRetry, setMentionRetry] = useState(0);
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+
+  const [pinnedGoal, setPinnedGoal] = useState<string | null>(initialPinnedGoal ?? null);
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [goalDraft, setGoalDraft] = useState(initialPinnedGoal ?? '');
+  const [savingGoal, setSavingGoal] = useState(false);
+  const [reactions, setReactions] = useState<Record<string, ChatReactionState>>({});
+
+  useEffect(() => {
+    setPinnedGoal(initialPinnedGoal ?? null);
+    setGoalDraft(initialPinnedGoal ?? '');
+  }, [initialPinnedGoal, roomId]);
+
+  useEffect(() => {
+    const names = typingPeople.map((p) => p.nickname).filter(Boolean);
+    onTypingSummaryChange?.(names.length > 0 ? names[0]! : null);
+  }, [onTypingSummaryChange, typingPeople]);
+
   useEffect(() => {
     setReplyTo(null);
   }, [roomId, options.userId]);
+
   useEffect(() => {
     if (replyTo && messages.some((message) => message.id === replyTo.id && message.deleted_at))
       setReplyTo(null);
   }, [messages, replyTo]);
+
+  useEffect(() => {
+    let active = true;
+    const ids = messages.filter((m) => m.message_type === 'system').map((m) => m.id);
+    if (!roomId || !isVisible || ids.length === 0) return;
+    void getChatReactions(roomId, ids)
+      .then((res) => {
+        if (active) setReactions(res);
+      })
+      .catch(() => {
+        // Ignore gracefully offline or under test mocks
+      });
+    return () => {
+      active = false;
+    };
+  }, [roomId, isVisible, messages]);
+
   useEffect(() => {
     let current = true;
     setFocusedMention(null);
@@ -134,6 +195,21 @@ export function ChatView({
       current = false;
     };
   }, [roomId, isVisible, focusedMentionId, mentionRetry, mentionAccessDenied]);
+
+  const handleToggleReaction = useCallback(async (messageId: string) => {
+    try {
+      const updated = await toggleChatReaction(messageId, 'heart');
+      setReactions((prev) => ({
+        ...prev,
+        [messageId]: {
+          count: updated.count,
+          viewer_liked: updated.viewer_liked,
+        },
+      }));
+    } catch {
+      // Ignore offline/network error cleanly
+    }
+  }, []);
 
   const openAttachment = (att: ChatAttachment) => {
     if (att.signed_url) {
@@ -188,7 +264,6 @@ export function ChatView({
     pending.current = null;
   };
 
-  // Handle retry
   const handleRetry = async (failedMessage: ChatMessage) => {
     setMediaReadError(false);
     try {
@@ -240,67 +315,107 @@ export function ChatView({
     });
   };
 
+  const savePinnedGoal = async (nextGoal: string | null) => {
+    if (!roomId) return;
+    setSavingGoal(true);
+    try {
+      const saved = await setRoomPinnedGoal(roomId, nextGoal);
+      setPinnedGoal(saved);
+      setEditingGoal(false);
+    } catch {
+      // keep dialog open cleanly if offline
+    } finally {
+      setSavingGoal(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={styles.container}
       testID={testID}
     >
       {mediaReadError ? (
-        <Text accessibilityRole="alert" style={{ color: colors.danger, padding: spacing.sm }}>
+        <V1Text variant="meta" color="danger" accessibilityRole="alert" style={styles.errorLine}>
           {t('chatAudit.actionError')}
-        </Text>
+        </V1Text>
       ) : null}
 
-      {/* 2. Locked Room Notice ("This room is paused") */}
-      {effectiveIsLocked && (
+      {effectiveIsLocked ? (
         <View
-          style={[styles.bannerStrip, { backgroundColor: colors.danger }]}
+          style={[styles.bannerStrip, { backgroundColor: v1Colors.danger }]}
           testID="banner-chat-locked"
           accessibilityLabel="Room paused banner"
         >
           <Ionicons name="lock-closed" size={16} color={visualPrimitives.colors.white} />
-          <Text style={styles.bannerStripText}>
+          <V1Text variant="meta" color="textHi" style={styles.bannerStripText}>
             {t('chat.pausedTitle')} — {t('chat.pausedSubtitle')}
-          </Text>
+          </V1Text>
         </View>
-      )}
+      ) : null}
 
-      {/* 3. Dormant Room Notice */}
-      {isDormant && !effectiveIsLocked && (
+      {isDormant && !effectiveIsLocked ? (
         <View
-          style={[styles.bannerStrip, { backgroundColor: colors.cardHighlight }]}
+          style={styles.dormantStrip}
           testID="banner-chat-dormant"
           accessibilityLabel="Dormant room notice"
         >
-          <Ionicons name="information-circle-outline" size={16} color={colors.accent} />
-          <Text style={[styles.bannerStripText, { color: colors.text }]}>
+          <Ionicons name="information-circle-outline" size={16} color={v1Colors.apricot} />
+          <V1Text variant="meta" color="textMid" style={styles.bannerStripText}>
             {t('chat.dormantBanner')}
-          </Text>
+          </V1Text>
         </View>
-      )}
+      ) : null}
 
-      {!mentionAccessDenied && focusedMentionId && (
+      {roomId && !effectiveIsLocked ? (
+        <View style={styles.pinnedBarOuter}>
+          <Pressable
+            onPress={() => {
+              setGoalDraft(pinnedGoal ?? '');
+              setEditingGoal(true);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={pinnedGoal ?? t('squadV1.pinnedDefault')}
+            style={({ pressed }) => [styles.pinnedBar, pressed ? styles.pressedRow : null]}
+            testID="btn-pinned-squad-goal"
+          >
+            <PinIcon size={14} color={v1Colors.apricot} />
+            <V1Text variant="meta" color="textMid" numberOfLines={1} style={styles.pinnedText}>
+              {pinnedGoal ? `${t('squadV1.pinnedPrefix')} ` : ''}
+              <V1Text
+                variant="meta"
+                color={pinnedGoal ? 'textHi' : 'textLo'}
+                style={pinnedGoal ? styles.boldText : undefined}
+              >
+                {pinnedGoal || t('squadV1.pinnedDefault')}
+              </V1Text>
+            </V1Text>
+            <ChevronDownIcon size={14} color={v1Colors.textLo} />
+          </Pressable>
+        </View>
+      ) : null}
+
+      {!mentionAccessDenied && focusedMentionId ? (
         <View style={{ padding: spacing.sm }} testID="focused-chat-mention">
-          {mentionError && (
+          {mentionError ? (
             <Pressable
               onPress={() => setMentionRetry((value) => value + 1)}
               accessibilityRole="button"
               accessibilityLabel={t('common.retry')}
               testID="retry-focused-mention"
             >
-              <Text accessibilityRole="alert">
+              <V1Text variant="meta" color="danger" accessibilityRole="alert">
                 {t(
                   focusedMention
                     ? 'squadDesign.mentionReadError'
                     : 'squadDesign.mentionUnavailable',
                 )}{' '}
                 · {t('common.retry')}
-              </Text>
+              </V1Text>
             </Pressable>
-          )}
-          {focusedMention && (
+          ) : null}
+          {focusedMention ? (
             <ScrollView style={{ maxHeight: homeLayout.touchSize * 4 }}>
               <ChatMessageBubble
                 message={focusedMention}
@@ -311,23 +426,23 @@ export function ChatView({
                 testID={`focused-mention-${focusedMention.id}`}
               />
             </ScrollView>
-          )}
+          ) : null}
         </View>
-      )}
-      {/* 4. Messages Area */}
+      ) : null}
+
       {loading && messages.length === 0 ? (
         <View style={styles.centeredLoading}>
-          <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={[styles.loadingLabel, { color: colors.textMuted }]}>
+          <ActivityIndicator size="large" color={v1Colors.apricot} />
+          <V1Text variant="meta" color="textLo">
             {t('common.loading')}
-          </Text>
+          </V1Text>
         </View>
       ) : error && messages.length === 0 ? (
         <View style={styles.centeredLoading} testID="chat-error-state">
-          <Ionicons name="alert-circle-outline" size={40} color={colors.danger} />
-          <Text style={[styles.loadingLabel, { color: colors.text, textAlign: 'center' }]}>
+          <Ionicons name="alert-circle-outline" size={40} color={v1Colors.danger} />
+          <V1Text variant="meta" color="textHi" style={styles.centerText}>
             {error.message || t('common.errorTitle')}
-          </Text>
+          </V1Text>
         </View>
       ) : (
         <FlatList
@@ -341,12 +456,21 @@ export function ChatView({
           }}
           onEndReachedThreshold={0.2}
           contentContainerStyle={styles.listContent}
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={styles.loadingMoreWrap}>
+                <ActivityIndicator size="small" color={v1Colors.apricot} />
+              </View>
+            ) : messages.length > 0 ? (
+              <View style={styles.todayDividerWrap}>
+                <V1Text variant="meta" color="textLo">
+                  {t('homeV1.todayLabel')}
+                </V1Text>
+              </View>
+            ) : null
+          }
           renderItem={({ item, index }) => {
             const isMine = isCurrentUserId(item.sender_id);
-
-            // Determine if "New Messages" divider belongs above this message
-            // In inverted list, index 0 is newest. If unreadCount is 3, items at index 0,1,2 are unread.
-            // Divider goes between index 2 and 3.
             const showNewMessagesDivider =
               unreadCount > 0 && index === unreadCount - 1 && index < messages.length - 1;
 
@@ -356,6 +480,8 @@ export function ChatView({
                   message={item}
                   isMine={isMine}
                   isSeenByAll={isMine && isMessageSeenByAll(item)}
+                  reaction={reactions[item.id]}
+                  onToggleReaction={(id) => void handleToggleReaction(id)}
                   onRetry={handleRetry}
                   onPressImage={openAttachment}
                   onLongPress={(msg) => setActiveMenuMessage(msg)}
@@ -363,63 +489,65 @@ export function ChatView({
                   testID={`bubble-${item.id}`}
                 />
 
-                {showNewMessagesDivider && (
+                {showNewMessagesDivider ? (
                   <View style={styles.dividerWrap} testID="divider-new-messages">
-                    <View style={[styles.dividerLine, { backgroundColor: colors.accent }]} />
-                    <View style={[styles.dividerBadge, { backgroundColor: colors.cardHighlight }]}>
-                      <Text style={[styles.dividerBadgeText, { color: colors.accent }]}>
+                    <View style={styles.dividerLine} />
+                    <View style={styles.dividerBadge}>
+                      <V1Text variant="micro" color="apricot" style={styles.dividerBadgeText}>
                         {t('chat.newMessagesDivider')}
-                      </Text>
+                      </V1Text>
                     </View>
-                    <View style={[styles.dividerLine, { backgroundColor: colors.accent }]} />
+                    <View style={styles.dividerLine} />
                   </View>
-                )}
+                ) : null}
               </View>
             );
           }}
           ListEmptyComponent={
             focusedMention ? null : (
-              <View style={{ padding: spacing.md }}>
-                <Text>{t('squadDesign.noChat')}</Text>
+              <View style={styles.emptyWrap}>
+                <V1Text variant="body" color="textLo">
+                  {t('squadDesign.noChat')}
+                </V1Text>
               </View>
             )
-          }
-          ListFooterComponent={
-            loadingMore ? (
-              <View style={styles.loadingMoreWrap}>
-                <ActivityIndicator size="small" color={colors.accent} />
-              </View>
-            ) : null
           }
           testID="list-chat-messages"
         />
       )}
 
       {typingPeople.length ? (
-        <Text
-          accessibilityLiveRegion="polite"
-          style={{ color: colors.textMuted, padding: spacing.sm }}
+        <View
+          style={styles.typingRow}
           testID="chat-typing-indicator"
+          accessibilityLiveRegion="polite"
         >
-          {t(
-            typingPeople.length === 1
-              ? 'chatAudit.typingOne'
-              : typingPeople.length <= 3
-                ? 'chatAudit.typingMany'
-                : typingPeople.length === 4
-                  ? 'chatAudit.typingOneMore'
-                  : 'chatAudit.typingMore',
-            {
-              names: typingPeople
-                .slice(0, 3)
-                .map((person) => person.nickname)
-                .join(', '),
-              count: typingPeople.length - 3,
-            },
-          )}
-        </Text>
+          <View style={styles.typingDots}>
+            <View style={[styles.typingDot, styles.typingDotDim]} />
+            <View style={styles.typingDot} />
+            <View style={[styles.typingDot, styles.typingDotDim]} />
+          </View>
+          <V1Text variant="meta" color="textLo">
+            {t(
+              typingPeople.length === 1
+                ? 'chatAudit.typingOne'
+                : typingPeople.length <= 3
+                  ? 'chatAudit.typingMany'
+                  : typingPeople.length === 4
+                    ? 'chatAudit.typingOneMore'
+                    : 'chatAudit.typingMore',
+              {
+                names: typingPeople
+                  .slice(0, 3)
+                  .map((person) => person.nickname)
+                  .join(', '),
+                count: typingPeople.length - 3,
+              },
+            )}
+          </V1Text>
+        </View>
       ) : null}
-      {/* 5. Message Composer */}
+
       <ChatComposer
         key={`${roomId}:${options.userId}`}
         reply={
@@ -434,6 +562,9 @@ export function ChatView({
         mentionMembers={mentionMembers.filter((member) => member.user_id !== options.userId)}
         onSend={handleSend}
         onTyping={notifyTyping}
+        placeholder={roomName ? t('squadV1.chatPlaceholder', { name: roomName }) : undefined}
+        prefillText={prefillText}
+        onPrefillConsumed={onPrefillConsumed}
         disabled={effectiveIsLocked || isDormant}
         disabledReason={
           effectiveIsLocked
@@ -447,16 +578,57 @@ export function ChatView({
         onRequireTerms={() => setShowTermsModal(true)}
       />
 
-      {/* 6. Modals */}
+      {editingGoal ? (
+        <Sheet
+          visible={editingGoal}
+          onClose={() => setEditingGoal(false)}
+          accessibilityLabel={t('squadV1.pinnedSheetTitle')}
+          testID="sheet-pinned-goal"
+        >
+          <View style={styles.goalSheetWrap}>
+            <View style={styles.goalSheetTop}>
+              <V1Text variant="titleM" color="textHi">
+                {t('squadV1.pinnedSheetTitle')}
+              </V1Text>
+              <IconButton
+                icon={<CloseIcon size={18} color={v1Colors.textHi} />}
+                accessibilityLabel={t('squadDesign.close')}
+                onPress={() => setEditingGoal(false)}
+              />
+            </View>
+            <TextInput
+              value={goalDraft}
+              onChangeText={setGoalDraft}
+              placeholder={t('squadV1.pinnedPlaceholder')}
+              placeholderTextColor={v1Colors.textLo}
+              maxLength={120}
+              style={styles.goalInput}
+              testID="input-pinned-goal"
+            />
+            <PrimaryButton
+              title={t('squadV1.saveGoal')}
+              loading={savingGoal}
+              onPress={() => void savePinnedGoal(goalDraft.trim() || null)}
+              testID="btn-save-pinned-goal"
+            />
+            {pinnedGoal ? (
+              <SecondaryButton
+                title={t('squadV1.clearGoal')}
+                disabled={savingGoal}
+                onPress={() => void savePinnedGoal(null)}
+                testID="btn-clear-pinned-goal"
+              />
+            ) : null}
+          </View>
+        </Sheet>
+      ) : null}
 
-      {/* Full-screen Image Viewer */}
       <ChatImageViewerModal
         visible={Boolean(activeImageAttachment)}
         attachment={activeImageAttachment}
         onClose={() => setActiveImageAttachment(null)}
       />
 
-      {/* Long-press Action Sheet Menu */}
       <ChatMessageMenuModal
         visible={Boolean(activeMenuMessage)}
         message={activeMenuMessage}
@@ -475,7 +647,6 @@ export function ChatView({
         }}
       />
 
-      {/* Report Modal */}
       <ChatReportModal
         visible={Boolean(reportTargetMessageId)}
         messageId={reportTargetMessageId}
@@ -483,7 +654,6 @@ export function ChatView({
         onSubmitReport={reportMessage}
       />
 
-      {/* Terms Acceptance Sheet */}
       <ChatTermsModal
         visible={showTermsModal}
         onAccept={acceptTerms}
@@ -496,6 +666,11 @@ export function ChatView({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: v1Colors.bg0,
+  },
+  errorLine: {
+    paddingHorizontal: v1Space.lg,
+    paddingVertical: v1Space.xs,
   },
   bannerStrip: {
     flexDirection: 'row',
@@ -505,11 +680,46 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     gap: 6,
   },
+  dormantStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: v1Space.sm,
+    paddingHorizontal: v1Space.lg,
+    gap: 6,
+    backgroundColor: v1Colors.s1,
+  },
   bannerStripText: {
-    color: visualPrimitives.colors.white,
-    fontSize: fontSize.xs,
-    fontWeight: '600',
     textAlign: 'center',
+  },
+  pinnedBarOuter: {
+    paddingHorizontal: v1Space.lg,
+    paddingTop: v1Space.sm,
+    paddingBottom: v1Space.xs,
+  },
+  pinnedBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: v1Space.sm,
+    borderRadius: v1Radius.chip,
+    backgroundColor: v1Colors.s1,
+    borderWidth: borders.width,
+    borderColor: v1Colors.hairline,
+    paddingHorizontal: v1Space.md,
+    paddingVertical: v1Space.sm + 2,
+  },
+  pressedRow: {
+    backgroundColor: v1Colors.s2,
+  },
+  pinnedText: {
+    flex: 1,
+  },
+  boldText: {
+    fontFamily: fonts.bold,
+  },
+  todayDividerWrap: {
+    alignItems: 'center',
+    paddingVertical: v1Space.md,
   },
   centeredLoading: {
     flex: 1,
@@ -518,38 +728,80 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     gap: spacing.sm,
   },
-  loadingLabel: {
-    fontSize: fontSize.xs,
+  centerText: {
+    textAlign: 'center',
   },
   listContent: {
-    paddingVertical: spacing.sm,
+    paddingVertical: v1Space.sm,
+  },
+  emptyWrap: {
+    padding: v1Space.lg,
+    alignItems: 'center',
   },
   loadingMoreWrap: {
-    paddingVertical: spacing.sm,
+    paddingVertical: v1Space.sm,
     alignItems: 'center',
     transform: [{ scaleY: -1 }],
   },
-  // New messages divider
   dividerWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: spacing.md,
-    paddingHorizontal: spacing.md,
+    marginVertical: v1Space.md,
+    paddingHorizontal: v1Space.lg,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    opacity: 0.35,
+    backgroundColor: v1Colors.hairline,
   },
   dividerBadge: {
-    paddingHorizontal: spacing.sm + 2,
+    paddingHorizontal: v1Space.sm + 2,
     paddingVertical: 3,
     borderRadius: radius.pill,
-    marginHorizontal: spacing.sm,
+    backgroundColor: v1Colors.s2,
+    marginHorizontal: v1Space.sm,
   },
   dividerBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
     letterSpacing: 0.5,
+  },
+  typingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: v1Space.sm,
+    paddingHorizontal: v1Space.lg,
+    paddingVertical: v1Space.xs + 2,
+  },
+  typingDots: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  typingDot: {
+    width: 4,
+    height: 4,
+    borderRadius: v1Radius.full,
+    backgroundColor: v1Colors.textLo,
+  },
+  typingDotDim: {
+    opacity: 0.5,
+  },
+  goalSheetWrap: {
+    gap: v1Space.md,
+  },
+  goalSheetTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  goalInput: {
+    height: 46,
+    borderRadius: v1Radius.chip,
+    backgroundColor: v1Colors.s1,
+    borderWidth: borders.width,
+    borderColor: v1Colors.hairline,
+    paddingHorizontal: v1Space.lg,
+    color: v1Colors.textHi,
+    fontFamily: fonts.regular,
+    fontSize: fontSize.sm,
   },
 });

@@ -1,79 +1,93 @@
-import { HeaderActions } from '@/components/HeaderActions';
-import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import {
-  Avatar,
-  Button,
-  homeLayout,
-  radius,
-  Sheet,
-  Text,
-  SegmentedControl,
-  space,
-} from '@calipartner/ui';
-import { Ionicons } from '@expo/vector-icons';
 import { setStringAsync } from 'expo-clipboard';
+import { Avatar, Button, Sheet, Text, homeLayout } from '@calipartner/ui';
+import {
+  BellIcon,
+  ChatBubbleIcon,
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  CloseIcon,
+  IconButton,
+  InfoCircleIcon,
+  Segmented as V1Segmented,
+  SlidersIcon,
+  Text as V1Text,
+  borders,
+  colors,
+  fonts,
+  layout,
+  radius,
+  space,
+} from '@calipartner/ui/v1';
 import { closeBrowserModalsThen, useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { t } from '@/i18n';
 import type { RoomSummary } from '@/types/rooms';
-import { useSquadStyles } from './SquadViews';
 import { EditSquadName } from './EditSquadName';
+import { AvatarCluster, sponsorLabelForRoom } from './SquadUiHelpers';
+import { useSquadStyles } from './SquadViews';
+
 export type RoomSegment = 'today' | 'chat' | 'progress' | 'members';
+
 export interface RoomHeaderProps {
   currentRoom: RoomSummary | null;
   allRooms: RoomSummary[];
+  currentUserId?: string | null;
   pendingRequestsCount: number;
   streakDays?: number;
   activeSegment: RoomSegment;
   chatUnreadCount?: number;
+  typingText?: string | null;
+  collapsed?: boolean;
   showMembers?: boolean;
   isWaiting?: boolean;
   onSelectSegment: (segment: RoomSegment) => void;
   onOpenInbox: () => void;
   onOpenSettings: () => void;
   onOpenPrivacy: () => void;
+  onOpenSwitcher?: () => void;
   onBack?: () => void;
   onSwitchRoom?: (room: RoomSummary) => void;
   onCreateOrJoin?: () => void;
 }
+
 export function RoomHeader({
   currentRoom,
   allRooms,
+  currentUserId,
   pendingRequestsCount,
   activeSegment,
   chatUnreadCount = 0,
+  typingText,
+  collapsed = false,
   onSelectSegment,
   onOpenInbox,
   onOpenSettings,
   onOpenPrivacy,
+  onOpenSwitcher,
   onBack,
   onSwitchRoom,
   onCreateOrJoin,
 }: RoomHeaderProps) {
   const styles = useSquadStyles();
+  const [panel, setPanel] = useState<'rooms' | 'actions' | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState(false);
 
-  const { colors: dark } = useAppearance();
+  useBrowserModalBack(panel !== null, () => setPanel(null));
 
-  const [panel, setPanel] = useState<'rooms' | 'actions' | null>(null),
-    [roomsDropdownOpen, setRoomsDropdownOpen] = useState(false),
-    [copied, setCopied] = useState(false),
-    [error, setError] = useState(false);
-  useBrowserModalBack(panel !== null || roomsDropdownOpen, () => {
-    setPanel(null);
-    setRoomsDropdownOpen(false);
-  });
   useEffect(() => {
     setCopied(false);
     setError(false);
     setPanel(null);
-    setRoomsDropdownOpen(false);
   }, [currentRoom?.id]);
+
   const closeThen = (action: () => void, switchingRoom = false) => {
     setPanel(null);
     if (switchingRoom) closeBrowserModalsThen(action);
     else action();
   };
+
   const copy = async () => {
     if (!currentRoom) return;
     try {
@@ -84,307 +98,376 @@ export function RoomHeader({
       setError(true);
     }
   };
-  if (activeSegment === 'chat')
+
+  if (activeSegment === 'chat') {
+    const subLine = typingText
+      ? t('squadV1.chatTitleSubTyping', {
+          count: currentRoom?.member_count ?? 1,
+          name: typingText,
+        })
+      : t('squadV1.membersCount', { count: currentRoom?.member_count ?? 1 });
+
     return (
-      <View style={[styles.row, { padding: homeLayout.iconSize }]} testID="squad-chat-header">
-        {onBack && (
-          <Button
-            variant="tertiary"
-            label={t('friends.back')}
+      <View style={localStyles.chatHeader} testID="squad-chat-header">
+        {onBack ? (
+          <IconButton
+            icon={<ChevronLeftIcon size={18} color={colors.textHi} />}
+            accessibilityLabel={t('friends.back')}
             onPress={onBack}
             testID="squad-chat-back"
-            fullWidth={false}
           />
-        )}
-        <Text variant="title2" style={styles.flex}>
-          {currentRoom?.name ?? t('tabs.room')}
-        </Text>
-        <Button
-          variant="tertiary"
-          fullWidth={false}
-          label={t('rooms.settingsModal.title')}
-          iconOnly
-          icon={<Ionicons name="settings-outline" size={homeLayout.iconSize} color={dark.textHi} />}
-          onPress={onOpenSettings}
-          style={styles.back}
-          accessibilityRole="button"
+        ) : null}
+
+        <AvatarCluster size={24} />
+
+        <View style={localStyles.chatTitleCol}>
+          <V1Text variant="titleS" color="textHi" numberOfLines={1} style={localStyles.boldText}>
+            {currentRoom?.name ?? t('tabs.room')}
+          </V1Text>
+          <V1Text variant="meta" color="textLo" numberOfLines={1}>
+            {subLine}
+          </V1Text>
+        </View>
+
+        <IconButton
+          icon={<InfoCircleIcon size={18} color={colors.textHi} />}
           accessibilityLabel={t('rooms.settingsModal.title')}
+          onPress={onOpenSettings}
           testID="btn-room-settings"
         />
       </View>
     );
+  }
+
+  const sponsorText = sponsorLabelForRoom(currentRoom, currentUserId);
+  const segmentOptions = [
+    { value: 'today' as RoomSegment, label: t('squadV1.todayTab') },
+    { value: 'progress' as RoomSegment, label: t('squadV1.progressTab') },
+  ];
+
+  const handleOpenSwitcher = () => {
+    if (onOpenSwitcher) {
+      onOpenSwitcher();
+    } else {
+      setPanel('rooms');
+    }
+  };
+
   return (
-    <View
-      style={[styles.stack, { padding: homeLayout.iconSize, position: 'relative', zIndex: 1000 }]}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: space[2],
-        }}
-      >
-        <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: space[1],
-            }}
+    <View style={[localStyles.headerWrap, collapsed ? localStyles.headerStickyBar : null]}>
+      {collapsed && currentRoom ? (
+        <View style={localStyles.stickyRow}>
+          <Pressable
+            onPress={handleOpenSwitcher}
+            accessibilityRole="button"
+            accessibilityLabel={currentRoom.name}
+            style={localStyles.stickyTitleBtn}
+            testID="btn-room-title-switcher"
           >
-            <Pressable
-              onPress={() => setRoomsDropdownOpen((prev) => !prev)}
-              accessibilityRole="button"
-              accessibilityLabel={currentRoom?.name ?? t('tabs.room')}
-              accessibilityState={{ expanded: roomsDropdownOpen }}
-              testID="btn-room-title-switcher"
-              style={({ pressed }) => ({
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: space[1],
-                flexShrink: 1,
-                minHeight: homeLayout.touchSize,
-                paddingVertical: space[1],
-                paddingHorizontal: space[1],
-                borderRadius: radius.control,
-                backgroundColor: pressed ? dark.s2 : 'transparent',
-              })}
-            >
-              <Text
-                variant="title2"
-                numberOfLines={1}
-                color={dark.textHi}
-                style={{ flexShrink: 1 }}
-              >
-                {currentRoom?.name ?? t('tabs.room')}
-              </Text>
-              <Ionicons
-                name={roomsDropdownOpen ? 'chevron-up' : 'chevron-down'}
-                size={20}
-                color={dark.textMid}
-              />
-            </Pressable>
-            {currentRoom && activeSegment === 'today' && (
-              <EditSquadName room={currentRoom} location="squad" />
-            )}
+            <V1Text variant="titleM" color="textHi" numberOfLines={1}>
+              {currentRoom.name}
+            </V1Text>
+          </Pressable>
+
+          <View style={localStyles.stickySegmentedWrap}>
+            <V1Segmented
+              compact
+              options={segmentOptions}
+              value={activeSegment === 'progress' ? 'progress' : 'today'}
+              onChange={(val) => onSelectSegment(val)}
+              testID="room-tab"
+            />
           </View>
-          {currentRoom && (
-            <Text variant="micro" tabular color={dark.textMid} style={{ marginTop: -space[1] }}>
-              {currentRoom.member_cap
-                ? t('homeRefresh.members', {
-                    count: currentRoom.member_count,
-                    cap: currentRoom.member_cap,
-                  })
-                : t('squadDesign.members', { count: currentRoom.member_count })}
-            </Text>
-          )}
         </View>
-        <HeaderActions />
-        <Pressable
-          onPress={() => setPanel('actions')}
-          accessibilityRole="button"
-          accessibilityLabel={t('squadDesign.actions')}
-          style={styles.back}
-          testID="btn-room-options"
-        >
-          <Ionicons name="options-outline" size={homeLayout.iconSize} color={dark.textHi} />
-          {pendingRequestsCount > 0 && (
-            <Text variant="micro" tabular>
-              {pendingRequestsCount}
-            </Text>
-          )}
-        </Pressable>
-      </View>
-      {roomsDropdownOpen && (
-        <View
-          testID="room-switcher-dropdown"
-          style={{
-            position: 'absolute',
-            top: homeLayout.iconSize + homeLayout.touchSize + space[2],
-            left: homeLayout.iconSize,
-            right: homeLayout.iconSize,
-            zIndex: 1000,
-            backgroundColor: dark.s2,
-            borderColor: dark.hairline,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderRadius: radius.control,
-            overflow: 'hidden',
-            maxHeight: homeLayout.touchSize * 6,
-          }}
-        >
-          <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled">
-            {allRooms.map((r) => {
-              const isCurrent = r.id === currentRoom?.id;
-              return (
+      ) : (
+        <>
+          <View style={localStyles.topRow}>
+            <View style={localStyles.titleCol}>
+              <View style={localStyles.titleActionRow}>
                 <Pressable
-                  key={r.id}
-                  onPress={() => {
-                    setRoomsDropdownOpen(false);
-                    onSwitchRoom?.(r);
-                  }}
-                  accessibilityRole="radio"
-                  accessibilityState={{ checked: isCurrent }}
-                  accessibilityLabel={r.name}
-                  testID={'btn-switch-room-' + r.id}
-                  style={({ pressed }) => ({
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingVertical: space[2],
-                    paddingHorizontal: space[3],
-                    gap: space[2],
-                    backgroundColor: pressed || isCurrent ? dark.s2 : 'transparent',
-                    borderBottomWidth: StyleSheet.hairlineWidth,
-                    borderBottomColor: dark.hairline,
-                  })}
+                  onPress={handleOpenSwitcher}
+                  accessibilityRole="button"
+                  accessibilityLabel={currentRoom?.name ?? t('tabs.room')}
+                  style={({ pressed }) => [
+                    localStyles.switcherBtn,
+                    pressed ? localStyles.pressedOpacity : null,
+                  ]}
+                  testID="btn-room-title-switcher"
                 >
-                  <Avatar name={r.name} size="sm" />
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text variant="heading" numberOfLines={1}>
-                      {r.name}
-                    </Text>
-                    <Text variant="micro" color={dark.textMid}>
-                      {t('squadDesign.members', { count: r.member_count })}
-                    </Text>
-                  </View>
-                  {isCurrent && <Ionicons name="checkmark" size={18} color={dark.copper} />}
+                  <V1Text
+                    variant="titleM"
+                    color="textHi"
+                    numberOfLines={1}
+                    style={localStyles.flexShrink}
+                  >
+                    {currentRoom?.name ?? t('tabs.room')}
+                  </V1Text>
+                  <ChevronDownIcon size={18} color={colors.textMid} />
                 </Pressable>
-              );
-            })}
-            {onCreateOrJoin && (
-              <Pressable
-                onPress={() => {
-                  setRoomsDropdownOpen(false);
-                  onCreateOrJoin();
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={t('homeRefresh.create')}
-                testID="btn-switcher-create-room"
-                style={({ pressed }) => ({
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingVertical: space[2],
-                  paddingHorizontal: space[3],
-                  gap: space[2],
-                  backgroundColor: pressed ? dark.s2 : 'transparent',
-                })}
-              >
-                <Ionicons name="add-circle-outline" size={20} color={dark.copper} />
-                <Text variant="body" color={dark.copper}>
-                  {t('homeRefresh.create')}
-                </Text>
-              </Pressable>
+                {currentRoom && activeSegment === 'today' ? (
+                  <EditSquadName room={currentRoom} location="squad" />
+                ) : null}
+              </View>
+
+              {currentRoom ? (
+                <View style={localStyles.subMetaRow}>
+                  <V1Text
+                    variant="meta"
+                    color="textLo"
+                    numberOfLines={1}
+                    style={localStyles.flexShrink}
+                  >
+                    {t('squadV1.membersCount', { count: currentRoom.member_count })} · {sponsorText}
+                  </V1Text>
+                  <Pressable
+                    onPress={() => void copy()}
+                    hitSlop={6}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('squadDesign.code', { code: currentRoom.code })}
+                    testID="btn-copy-room-code"
+                  >
+                    <V1Text variant="meta" color={copied ? 'apricot' : 'textLo'}>
+                      {` · ${currentRoom.code}${copied ? ' ✓' : ''}`}
+                    </V1Text>
+                  </Pressable>
+                </View>
+              ) : null}
+            </View>
+
+            <View style={localStyles.iconGroup}>
+              <View style={localStyles.badgeAnchor}>
+                <IconButton
+                  icon={<ChatBubbleIcon size={18} color={colors.textHi} />}
+                  accessibilityLabel={t('squadDesign.chat')}
+                  onPress={() => onSelectSegment('chat')}
+                  testID="btn-room-open-chat"
+                />
+                {chatUnreadCount > 0 ? <View style={localStyles.dotBadge} /> : null}
+              </View>
+
+              <View style={localStyles.badgeAnchor}>
+                <IconButton
+                  icon={<BellIcon size={18} color={colors.textHi} />}
+                  accessibilityLabel={t('rooms.inboxModal.title')}
+                  onPress={onOpenInbox}
+                  testID="btn-room-inbox-quick"
+                />
+                {pendingRequestsCount > 0 ? <View style={localStyles.dotBadge} /> : null}
+              </View>
+
+              <IconButton
+                icon={<SlidersIcon size={18} color={colors.textHi} />}
+                accessibilityLabel={t('squadDesign.actions')}
+                onPress={() => setPanel('actions')}
+                testID="btn-room-options"
+              />
+            </View>
+          </View>
+
+          {error ? (
+            <V1Text variant="meta" color="danger" accessibilityRole="alert">
+              {t('roomAudit.actionError')}
+            </V1Text>
+          ) : null}
+
+          {currentRoom ? (
+            <V1Segmented
+              options={segmentOptions}
+              value={activeSegment === 'progress' ? 'progress' : 'today'}
+              onChange={(val) => onSelectSegment(val)}
+              testID="room-tab"
+            />
+          ) : null}
+        </>
+      )}
+
+      {panel ? (
+        <Sheet
+          visible
+          onClose={() => setPanel(null)}
+          snapPoint="tall"
+          accessibilityLabel={t('squadDesign.actions')}
+          testID="room-options-sheet"
+        >
+          <ScrollView contentContainerStyle={styles.content}>
+            <View style={localStyles.sheetTopRow}>
+              <V1Text variant="titleM" color="textHi">
+                {panel === 'rooms' ? t('squadV1.switcherTitle') : t('squadDesign.actions')}
+              </V1Text>
+              <IconButton
+                icon={<CloseIcon size={18} color={colors.textHi} />}
+                accessibilityLabel={t('squadDesign.close')}
+                onPress={() => setPanel(null)}
+              />
+            </View>
+            {panel === 'rooms' ? (
+              <>
+                {allRooms.map((room) => (
+                  <Pressable
+                    key={room.id}
+                    onPress={() => closeThen(() => onSwitchRoom?.(room), true)}
+                    style={styles.leader}
+                    accessibilityRole="button"
+                    accessibilityLabel={room.name}
+                    testID={'btn-switch-room-' + room.id}
+                  >
+                    <Avatar name={room.name} size="sm" />
+                    <View style={styles.flex}>
+                      <Text variant="heading">{room.name}</Text>
+                      <Text>{t('squadDesign.members', { count: room.member_count })}</Text>
+                    </View>
+                  </Pressable>
+                ))}
+                <Button
+                  variant="secondary"
+                  label={t('homeRefresh.create')}
+                  onPress={() => closeThen(() => onCreateOrJoin?.())}
+                  testID="btn-switcher-create-room"
+                />
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="secondary"
+                  label={`${t('rooms.inboxModal.title')} (${pendingRequestsCount})`}
+                  onPress={() => closeThen(onOpenInbox)}
+                  testID="btn-room-inbox"
+                />
+                {currentRoom ? (
+                  <>
+                    <Button
+                      variant="secondary"
+                      label={t('rooms.settingsModal.title')}
+                      onPress={() => closeThen(onOpenSettings)}
+                      testID="btn-room-settings"
+                    />
+                    <Button
+                      variant="secondary"
+                      label={t('rooms.privacyModal.title')}
+                      onPress={() => closeThen(onOpenPrivacy)}
+                      testID="btn-room-privacy"
+                    />
+                  </>
+                ) : null}
+                <Button
+                  variant="secondary"
+                  label={t('homeRefresh.create')}
+                  onPress={() => closeThen(() => onCreateOrJoin?.())}
+                  testID="btn-room-create"
+                />
+              </>
             )}
           </ScrollView>
-        </View>
-      )}
-      {currentRoom && (
-        <View style={styles.row}>
-          <Pressable
-            onPress={() => void copy()}
-            accessibilityRole="button"
-            accessibilityLabel={t('squadDesign.code', { code: currentRoom.code })}
-            style={styles.touch}
-            testID="btn-copy-room-code"
-          >
-            <Text variant="bodyS">
-              {t('squadDesign.code', { code: currentRoom.code })}
-              {copied ? ' \u2713' : ''}
-            </Text>
-          </Pressable>
-        </View>
-      )}
-      {error && <Text accessibilityRole="alert">{t('roomAudit.actionError')}</Text>}
-      {currentRoom && (
-        <SegmentedControl
-          options={[
-            { value: 'today', label: t('squadDesign.overview') },
-            { value: 'progress', label: t('squadDesign.leaderboard') },
-            {
-              value: 'chat',
-              label: t('squadDesign.chat'),
-              badge: chatUnreadCount > 0 ? chatUnreadCount : undefined,
-            },
-          ]}
-          value={activeSegment}
-          onChange={onSelectSegment}
-          testID="room-tab"
-        />
-      )}
-      <Sheet
-        visible={panel !== null}
-        onClose={() => setPanel(null)}
-        snapPoint="tall"
-        accessibilityLabel={t('squadDesign.actions')}
-        testID="room-options-sheet"
-      >
-        <ScrollView contentContainerStyle={styles.content}>
-          <Button
-            variant="secondary"
-            size="sm"
-            fullWidth={false}
-            label={t('squadDesign.close')}
-            onPress={() => setPanel(null)}
-          />
-          {panel === 'rooms' ? (
-            <>
-              {allRooms.map((room) => (
-                <Pressable
-                  key={room.id}
-                  onPress={() => closeThen(() => onSwitchRoom?.(room), true)}
-                  style={styles.leader}
-                  accessibilityRole="button"
-                  accessibilityLabel={room.name}
-                  testID={'btn-switch-room-' + room.id}
-                >
-                  <Avatar name={room.name} size="sm" />
-                  <View style={styles.flex}>
-                    <Text variant="heading">{room.name}</Text>
-                    <Text>{t('squadDesign.members', { count: room.member_count })}</Text>
-                  </View>
-                </Pressable>
-              ))}
-              <Button
-                variant="secondary"
-                label={t('homeRefresh.create')}
-                onPress={() => closeThen(() => onCreateOrJoin?.())}
-                testID="btn-switcher-create-room"
-              />
-            </>
-          ) : (
-            <>
-              <Button
-                variant="secondary"
-                label={t('rooms.inboxModal.title') + ' (' + pendingRequestsCount + ')'}
-                onPress={() => closeThen(onOpenInbox)}
-                testID="btn-room-inbox"
-              />
-              {currentRoom && (
-                <>
-                  <Button
-                    variant="secondary"
-                    label={t('rooms.settingsModal.title')}
-                    onPress={() => closeThen(onOpenSettings)}
-                    testID="btn-room-settings"
-                  />
-                  <Button
-                    variant="secondary"
-                    label={t('rooms.privacyModal.title')}
-                    onPress={() => closeThen(onOpenPrivacy)}
-                    testID="btn-room-privacy"
-                  />
-                </>
-              )}
-              <Button
-                variant="secondary"
-                label={t('homeRefresh.create')}
-                onPress={() => closeThen(() => onCreateOrJoin?.())}
-                testID="btn-room-create"
-              />
-            </>
-          )}
-        </ScrollView>
-      </Sheet>
+        </Sheet>
+      ) : null}
     </View>
   );
 }
+
+// Keep imports clean; RoomHeader supports Today, Progress, and Chat segments.
+
+const localStyles = StyleSheet.create({
+  headerWrap: {
+    paddingHorizontal: layout.screenPaddingX,
+    paddingTop: space.xs,
+    paddingBottom: space.md,
+    gap: space.md,
+    backgroundColor: colors.bg0,
+  },
+  headerStickyBar: {
+    paddingBottom: space.sm,
+    borderBottomWidth: borders.width,
+    borderBottomColor: colors.hairline,
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.md,
+  },
+  titleCol: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  titleActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.xs,
+    maxWidth: '100%',
+  },
+  switcherBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.xs + 2,
+    flexShrink: 1,
+    maxWidth: '100%',
+  },
+  flexShrink: {
+    flexShrink: 1,
+  },
+  subMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  iconGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.xs + 2,
+  },
+  badgeAnchor: {
+    position: 'relative',
+  },
+  dotBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    width: 8,
+    height: 8,
+    borderRadius: radius.full,
+    backgroundColor: colors.apricot,
+    borderWidth: 1.5,
+    borderColor: colors.bg0,
+  },
+  pressedOpacity: {
+    opacity: 0.78,
+  },
+  stickyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.md,
+  },
+  stickyTitleBtn: {
+    flex: 1,
+    minHeight: homeLayout.touchSize,
+    justifyContent: 'center',
+  },
+  stickySegmentedWrap: {
+    width: 190,
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: layout.screenPaddingX,
+    paddingVertical: space.sm,
+    gap: space.sm + 2,
+    backgroundColor: colors.bg0,
+    borderBottomWidth: borders.width,
+    borderBottomColor: colors.hairline,
+  },
+  chatTitleCol: {
+    flex: 1,
+    minWidth: 0,
+    gap: 1,
+  },
+  boldText: {
+    fontFamily: fonts.bold,
+  },
+  sheetTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+});

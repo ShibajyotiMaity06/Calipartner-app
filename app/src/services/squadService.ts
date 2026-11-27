@@ -1,6 +1,9 @@
 import { cachedRead } from './offlineReadService';
 import {
   rankSquadMembers,
+  type CompareRange,
+  type SquadActivityItem,
+  type SquadComparePayload,
   type SquadMember,
   type SquadMemberDetails,
   type SquadMentions,
@@ -8,6 +11,7 @@ import {
 } from '@calipartner/core';
 import { getSupabase } from '@/lib/supabase';
 import { diaryEvents } from './diaryEvents';
+import { invalidateReadCache } from './readCache';
 
 export async function getSquadToday(roomId: string): Promise<SquadToday> {
   return cachedRead(getSupabase(), 'squad:' + roomId, async () => {
@@ -15,7 +19,12 @@ export async function getSquadToday(roomId: string): Promise<SquadToday> {
     if (error) throw error;
     if (data?.room_id !== roomId || !Array.isArray(data.members))
       throw new Error('SQUAD_UNAVAILABLE');
-    return { room_id: roomId, members: rankSquadMembers(data.members as SquadMember[]) };
+    return {
+      room_id: roomId,
+      pinned_goal: (data.pinned_goal as string | null | undefined) ?? null,
+      latest_message: (data.latest_message as SquadToday['latest_message']) ?? null,
+      members: rankSquadMembers(data.members as SquadMember[]),
+    };
   });
 }
 export async function getSquadMemberDetails(
@@ -80,4 +89,76 @@ export async function getSquadUnreadCount(roomId: string): Promise<number> {
   if (typeof data !== 'number' || !Number.isFinite(data) || data < 0)
     throw new Error('UNREAD_UNAVAILABLE');
   return data;
+}
+
+export async function getSquadActivity(roomId: string, limit = 12): Promise<SquadActivityItem[]> {
+  return cachedRead(getSupabase(), 'squad-activity:' + roomId, async () => {
+    const { data, error } = await getSupabase().rpc('get_squad_activity', {
+      p_room_id: roomId,
+      p_limit: limit,
+    });
+    if (error) throw error;
+    return Array.isArray(data) ? (data as SquadActivityItem[]) : [];
+  });
+}
+
+export async function setRoomPinnedGoal(
+  roomId: string,
+  goal: string | null,
+): Promise<string | null> {
+  const { data, error } = await getSupabase().rpc('set_room_pinned_goal', {
+    p_room_id: roomId,
+    p_goal: goal,
+  });
+  if (error) throw error;
+  invalidateReadCache('rooms');
+  invalidateReadCache('squad:' + roomId);
+  diaryEvents.emitChange();
+  return (data as string | null) ?? null;
+}
+
+export async function getSquadCompare(
+  roomId: string,
+  leftId: string,
+  rightId: string,
+  range: CompareRange = '7d',
+): Promise<SquadComparePayload> {
+  const { data, error } = await getSupabase().rpc('get_squad_compare', {
+    p_room_id: roomId,
+    p_left_id: leftId,
+    p_right_id: rightId,
+    p_range: range,
+  });
+  if (error) throw error;
+  return data as SquadComparePayload;
+}
+
+export interface ChatReactionState {
+  count: number;
+  viewer_liked: boolean;
+}
+
+export async function getChatReactions(
+  roomId: string,
+  messageIds: string[],
+): Promise<Record<string, ChatReactionState>> {
+  if (messageIds.length === 0) return {};
+  const { data, error } = await getSupabase().rpc('get_chat_reactions', {
+    p_room_id: roomId,
+    p_message_ids: messageIds,
+  });
+  if (error) throw error;
+  return (data as Record<string, ChatReactionState> | null) ?? {};
+}
+
+export async function toggleChatReaction(
+  messageId: string,
+  emoji = 'heart',
+): Promise<ChatReactionState & { message_id: string }> {
+  const { data, error } = await getSupabase().rpc('toggle_chat_reaction', {
+    p_message_id: messageId,
+    p_emoji: emoji,
+  });
+  if (error) throw error;
+  return data as ChatReactionState & { message_id: string };
 }

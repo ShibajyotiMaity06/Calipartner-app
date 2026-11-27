@@ -28,7 +28,11 @@ export function FeedTab() {
   const { user, isLoading } = useAuth();
   const [shared, setShared] = useState(false);
   return (
-    <FeedScreen title={t('feed.title')} testID="screen-feed">
+    <FeedScreen
+      title={t('feed.title')}
+      onSettings={() => router.push('/settings' as Href)}
+      testID="screen-feed"
+    >
       {isLoading ? (
         <FeedStatus loading />
       ) : !user ? (

@@ -128,6 +128,8 @@ export interface RoomSummary {
   created_at: string;
   who_can_invite: 'host_only' | 'any_member';
   plan_holder_id?: string | null;
+  plan_holder_name?: string | null;
+  pinned_goal?: string | null;
   member_cap?: number;
 }
 

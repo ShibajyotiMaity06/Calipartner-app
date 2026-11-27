@@ -1,6 +1,3 @@
-import { visualPrimitives } from '@calipartner/ui/tokens';
-import { Button } from '@calipartner/ui';
-import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useRef } from 'react';
 import {
   ActivityIndicator,
@@ -11,12 +8,23 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Text, space } from '@calipartner/ui';
-import { onboardingLayout as layout } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
+import { Button, onboardingLayout as layout, space } from '@calipartner/ui';
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
+import {
+  DumbbellIcon,
+  HeartIcon,
+  Text as V1Text,
+  borders,
+  colors as v1Colors,
+  fonts,
+  radius as v1Radius,
+  space as v1Space,
+} from '@calipartner/ui/v1';
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import type { ChatAttachment, ChatMessage } from '@/types/chat';
 import { t } from '@/i18n';
-import { fontSize, radius, spacing } from '@/theme/tokens';
+import type { ChatReactionState } from '@/services/squadService';
 import { useTheme } from '@/theme/useTheme';
 import { ChatAttachmentPreview } from './ChatAttachmentPreview';
 import { MentionText } from './MentionText';
@@ -25,6 +33,8 @@ export interface ChatMessageBubbleProps {
   message: ChatMessage;
   isMine: boolean;
   isSeenByAll?: boolean;
+  reaction?: ChatReactionState;
+  onToggleReaction?: (messageId: string) => void;
   onRetry?: (message: ChatMessage) => void;
   onPressImage?: (attachment: ChatAttachment) => void;
   onLongPress?: (message: ChatMessage) => void;
@@ -36,16 +46,35 @@ function formatTime(isoString: string): string {
   try {
     const d = new Date(isoString);
     if (isNaN(d.getTime())) return '';
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   } catch {
     return '';
   }
+}
+
+interface ParsedActivityCard {
+  title: string;
+  subtitle?: string;
+}
+
+function parseWorkoutShareCard(message: ChatMessage): ParsedActivityCard | null {
+  if (message.message_type !== 'system' || !message.text) return null;
+  if (message.system_event_type === 'streak_milestone' || /finished/i.test(message.text)) {
+    const parts = message.text.split(' · ');
+    return {
+      title: parts[0] ?? message.text,
+      subtitle: parts.slice(1).join(' · ') || undefined,
+    };
+  }
+  return null;
 }
 
 export function ChatMessageBubble({
   message,
   isMine,
   isSeenByAll,
+  reaction,
+  onToggleReaction,
   onRetry,
   onPressImage,
   onLongPress,
@@ -53,13 +82,13 @@ export function ChatMessageBubble({
   testID,
 }: ChatMessageBubbleProps) {
   const { colors: dark } = useAppearance();
-
   const { colors } = useTheme();
   const drag = useRef(new Animated.Value(0)).current;
   const replyHandler = useRef(onReply);
   const currentMessage = useRef(message);
   replyHandler.current = onReply;
   currentMessage.current = message;
+
   const pan = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gesture) =>
@@ -79,8 +108,54 @@ export function ChatMessageBubble({
     }),
   ).current;
 
-  // 1. System Message Render
   if (message.message_type === 'system') {
+    const workoutCard = parseWorkoutShareCard(message);
+    if (workoutCard) {
+      const count = reaction?.count ?? 0;
+      const liked = Boolean(reaction?.viewer_liked);
+      return (
+        <View
+          style={styles.activityCardOuter}
+          testID={testID ?? `chat-system-message-${message.id}`}
+        >
+          <View style={styles.activityCard}>
+            <View style={styles.activityIconTile}>
+              <DumbbellIcon size={16} color={v1Colors.textMid} />
+            </View>
+            <View style={styles.activityCardBody}>
+              <V1Text variant="label" color="textHi" style={styles.boldText} numberOfLines={2}>
+                {workoutCard.title}
+              </V1Text>
+              {workoutCard.subtitle ? (
+                <V1Text variant="meta" color="textLo" numberOfLines={1}>
+                  {workoutCard.subtitle}
+                </V1Text>
+              ) : null}
+            </View>
+            {onToggleReaction ? (
+              <Pressable
+                onPress={() => onToggleReaction(message.id)}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel={`React to workout, ${count} likes`}
+                style={[styles.reactionPill, liked ? styles.reactionPillActive : null]}
+                testID={`chat-reaction-${message.id}`}
+              >
+                <HeartIcon
+                  size={13}
+                  color={liked ? v1Colors.apricot : v1Colors.textMid}
+                  filled={liked}
+                />
+                <V1Text variant="meta" color={liked ? 'apricot' : 'textHi'} tabular>
+                  {count}
+                </V1Text>
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
+      );
+    }
+
     let iconName: keyof typeof Ionicons.glyphMap = 'information-circle-outline';
     if (message.system_event_type === 'member_joined') iconName = 'person-add-outline';
     if (message.system_event_type === 'member_left') iconName = 'person-remove-outline';
@@ -93,24 +168,24 @@ export function ChatMessageBubble({
         testID={testID ?? `chat-system-message-${message.id}`}
         accessibilityLabel={`System notification: ${message.text || ''}`}
       >
-        <View style={[styles.systemPill, { backgroundColor: colors.surfaceAlt }]}>
-          <Ionicons name={iconName} size={14} color={colors.accent} style={styles.systemIcon} />
-          <Text style={[styles.systemText, { color: colors.textMuted }]}>{message.text}</Text>
+        <View style={styles.systemPill}>
+          <Ionicons name={iconName} size={13} color={v1Colors.apricot} style={styles.systemIcon} />
+          <V1Text variant="meta" color="textLo" style={styles.systemText}>
+            {message.text}
+          </V1Text>
         </View>
       </View>
     );
   }
 
-  // 2. Regular User Message Render
   const isDeleted = Boolean(message.deleted_at);
   const timeFormatted = formatTime(message.created_at);
   const isFailed = message.delivery_status === 'failed';
   const isSending = message.delivery_status === 'sending';
   const isSent = message.delivery_status === 'sent';
 
-  const senderInitial = (message.sender_nickname || message.sender_username || '?')
-    .charAt(0)
-    .toUpperCase();
+  const senderName = message.sender_nickname || message.sender_username || 'Partner';
+  const senderInitial = senderName.charAt(0).toUpperCase();
 
   return (
     <Animated.View
@@ -118,22 +193,22 @@ export function ChatMessageBubble({
       style={[styles.rowContainer, isMine ? styles.rowMine : styles.rowOther]}
       testID={testID ?? `chat-message-${message.id}`}
     >
-      {/* Sender Avatar for incoming messages */}
-      {!isMine && (
-        <View style={[styles.avatarCircle, { backgroundColor: colors.cardHighlight }]}>
+      {!isMine ? (
+        <View style={styles.avatarCircle}>
           {message.sender_avatar_url ? (
             <Image
               source={{ uri: message.sender_avatar_url }}
               style={styles.avatarImage}
-              accessibilityLabel={`${message.sender_nickname || 'Member'} avatar`}
+              accessibilityLabel={`${senderName} avatar`}
             />
           ) : (
-            <Text style={[styles.avatarInitial, { color: colors.accent }]}>{senderInitial}</Text>
+            <V1Text variant="meta" color="textHi" style={styles.boldText}>
+              {senderInitial}
+            </V1Text>
           )}
         </View>
-      )}
+      ) : null}
 
-      {/* Bubble Container */}
       <Animated.View
         style={[
           styles.bubbleWrapper,
@@ -141,26 +216,22 @@ export function ChatMessageBubble({
           { transform: [{ translateX: drag }] },
         ]}
       >
-        {/* Sender name for incoming messages */}
-        {!isMine && (
-          <Text style={[styles.senderNickname, { color: colors.textMuted }]} numberOfLines={1}>
-            {message.sender_nickname || message.sender_username || 'Partner'}
-          </Text>
-        )}
+        {!isMine ? (
+          <V1Text variant="meta" color="textLo" style={styles.senderMetaLine} numberOfLines={1}>
+            {`${senderName}${timeFormatted ? ` · ${timeFormatted}` : ''}`}
+          </V1Text>
+        ) : null}
 
-        {/* Interactive Bubble */}
         <Pressable
           onLongPress={() => onLongPress?.(message)}
           delayLongPress={350}
           style={[
             styles.bubbleBox,
-            isMine
-              ? [styles.bubbleBoxMine, { backgroundColor: colors.surface }]
-              : [styles.bubbleBoxOther, { backgroundColor: colors.surfaceAlt }],
-            isFailed && { borderColor: colors.danger, borderWidth: 1 },
+            isMine ? styles.bubbleBoxMine : styles.bubbleBoxOther,
+            isFailed ? styles.bubbleFailed : null,
           ]}
           accessibilityRole="text"
-          accessibilityLabel={`${isMine ? 'You said' : `${message.sender_nickname || 'Partner'} said`}: ${
+          accessibilityLabel={`${isMine ? 'You said' : `${senderName} said`}: ${
             isDeleted ? t('chat.deletedMessage') : message.text || ''
           }. Sent at ${timeFormatted}`}
           testID={`bubble-content-${message.id}`}
@@ -176,48 +247,56 @@ export function ChatMessageBubble({
             event.nativeEvent.actionName === 'reply' ? onReply?.(message) : onLongPress?.(message)
           }
         >
-          {!isDeleted && message.reply_to_id && (
+          {!isDeleted && message.reply_to_id ? (
             <View
-              style={{
-                borderLeftWidth: space[1],
-                borderLeftColor: colors.accent,
-                padding: spacing.sm,
-              }}
+              style={[
+                styles.replyQuoteBox,
+                { borderLeftColor: isMine ? v1Colors.onBrand : v1Colors.apricot },
+              ]}
               testID={`reply-quote-${message.id}`}
             >
-              <Text style={{ color: colors.textMuted }}>
+              <V1Text variant="meta" color={isMine ? 'onBrand' : 'textLo'}>
                 {message.reply ? message.reply.name : t('aha.replyUnavailable')}
-              </Text>
-              {message.reply && (
-                <Text style={{ color: colors.text }} numberOfLines={3}>
+              </V1Text>
+              {message.reply ? (
+                <V1Text variant="meta" color={isMine ? 'onBrand' : 'textHi'} numberOfLines={3}>
                   {message.reply.text || t('aha.attachment')}
-                </Text>
-              )}
+                </V1Text>
+              ) : null}
             </View>
-          )}
-          {/* Message Text */}
+          ) : null}
+
           {isDeleted ? (
-            <Text style={[styles.deletedText, { color: isMine ? colors.text : colors.textMuted }]}>
+            <V1Text variant="meta" color={isMine ? 'onBrand' : 'textLo'} style={styles.deletedText}>
               {t('chat.deletedMessage')}
-            </Text>
+            </V1Text>
           ) : (
             Boolean(message.text) && (
-              <Text style={[styles.messageText, { color: colors.text }]}>
+              <V1Text
+                variant="body"
+                color={isMine ? 'onBrand' : 'textHi'}
+                style={styles.messageText}
+              >
                 <MentionText text={message.text!} />
-              </Text>
+              </V1Text>
             )
           )}
 
-          {/* Attachments Grid (if not deleted) */}
-          {!isDeleted && message.attachments && message.attachments.length > 0 && (
+          {!isDeleted && message.attachments && message.attachments.length > 0 ? (
             <View style={styles.attachmentsContainer}>
               {message.attachments.map((att, idx) => {
                 const isBlocked = att.moderation_status === 'blocked';
-                if (att.moderation_status === 'pending')
+                if (att.moderation_status === 'pending') {
                   return (
                     <View key={att.id || idx} style={styles.blockedImageContainer}>
-                      <Ionicons name="time-outline" size={16} color={colors.textMuted} />
-                      <Text style={{ color: colors.textMuted }}>{t('chatAudit.checking')}</Text>
+                      <Ionicons
+                        name="time-outline"
+                        size={16}
+                        color={isMine ? v1Colors.onBrand : v1Colors.textLo}
+                      />
+                      <V1Text variant="meta" color={isMine ? 'onBrand' : 'textLo'}>
+                        {t('chatAudit.checking')}
+                      </V1Text>
                       {isMine ? (
                         <Button
                           variant="secondary"
@@ -232,17 +311,15 @@ export function ChatMessageBubble({
                       ) : null}
                     </View>
                   );
+                }
 
                 if (isBlocked) {
                   return (
-                    <View
-                      key={att.id || idx}
-                      style={[styles.blockedImageContainer, { backgroundColor: colors.background }]}
-                    >
-                      <Ionicons name="shield-outline" size={16} color={colors.danger} />
-                      <Text style={[styles.blockedImageText, { color: colors.danger }]}>
+                    <View key={att.id || idx} style={styles.blockedImageContainer}>
+                      <Ionicons name="shield-outline" size={16} color={v1Colors.danger} />
+                      <V1Text variant="meta" color="danger">
                         {t('chat.blockedImage')}
-                      </Text>
+                      </V1Text>
                     </View>
                   );
                 }
@@ -257,92 +334,132 @@ export function ChatMessageBubble({
                 );
               })}
             </View>
-          )}
-
-          {/* Footer inside bubble: timestamp & delivery status */}
-          <View style={styles.footerRow}>
-            <Text style={[styles.timeText, { color: colors.textMuted }]}>{timeFormatted}</Text>
-
-            {isMine && (
-              <View style={styles.statusIconWrap}>
-                {isSending && (
-                  <ActivityIndicator
-                    size={10}
-                    color={colors.textMuted}
-                    style={styles.sendingSpinner}
-                  />
-                )}
-                {isSent &&
-                  (isSeenByAll ? (
-                    <Ionicons
-                      name="checkmark-done"
-                      size={14}
-                      color={dark.sky}
-                      testID={`tick-seen-${message.id}`}
-                      accessibilityLabel="Seen by everyone"
-                    />
-                  ) : (
-                    <Ionicons
-                      name="checkmark"
-                      size={12}
-                      color={colors.textMuted}
-                      testID={`tick-sent-${message.id}`}
-                      accessibilityLabel="Sent"
-                    />
-                  ))}
-                {isFailed && <Ionicons name="alert-circle" size={14} color={colors.danger} />}
-              </View>
-            )}
-          </View>
+          ) : null}
         </Pressable>
 
-        {/* Failed state: Retry button */}
-        {isMine && isFailed && (
+        {isMine ? (
+          <View style={styles.footerRow}>
+            <V1Text variant="micro" color="textLo" tabular>
+              {timeFormatted}
+            </V1Text>
+
+            <View style={styles.statusIconWrap}>
+              {isSending ? (
+                <ActivityIndicator
+                  size={10}
+                  color={v1Colors.textLo}
+                  style={styles.sendingSpinner}
+                />
+              ) : null}
+              {isSent ? (
+                isSeenByAll ? (
+                  <Ionicons
+                    name="checkmark-done"
+                    size={13}
+                    color={v1Colors.apricot || dark.sky}
+                    testID={`tick-seen-${message.id}`}
+                    accessibilityLabel="Seen by everyone"
+                  />
+                ) : (
+                  <Ionicons
+                    name="checkmark"
+                    size={12}
+                    color={v1Colors.textLo}
+                    testID={`tick-sent-${message.id}`}
+                    accessibilityLabel="Sent"
+                  />
+                )
+              ) : null}
+              {isFailed ? <Ionicons name="alert-circle" size={13} color={v1Colors.danger} /> : null}
+            </View>
+          </View>
+        ) : null}
+
+        {isMine && isFailed ? (
           <Button
             variant="destructive"
             fullWidth={false}
             label={t('chat.retryBtn')}
             icon={<Ionicons name="refresh-outline" size={14} color={colors.danger} />}
             onPress={() => onRetry?.(message)}
-            style={[styles.retryRow]}
+            style={styles.retryRow}
             accessibilityRole="button"
             accessibilityLabel="Retry sending failed message"
             testID={`btn-retry-message-${message.id}`}
           />
-        )}
+        ) : null}
       </Animated.View>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  // System Message Styles
   systemContainer: {
     alignItems: 'center',
-    marginVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
+    marginVertical: v1Space.xs,
+    paddingHorizontal: v1Space.lg,
   },
   systemPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.sm + 4,
-    paddingVertical: 5,
-    borderRadius: radius.pill,
+    paddingHorizontal: v1Space.md,
+    paddingVertical: v1Space.xs,
+    borderRadius: v1Radius.full,
+    backgroundColor: v1Colors.s1,
+    borderWidth: borders.width,
+    borderColor: v1Colors.hairline,
   },
   systemIcon: {
     marginRight: 6,
   },
   systemText: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
     textAlign: 'center',
   },
-
-  // User Message Row Styles
+  activityCardOuter: {
+    paddingHorizontal: v1Space.lg,
+    marginVertical: v1Space.xs,
+  },
+  activityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: v1Space.md,
+    borderRadius: v1Radius.card,
+    backgroundColor: v1Colors.s1,
+    borderWidth: borders.width,
+    borderColor: v1Colors.hairline,
+    paddingVertical: v1Space.md,
+    paddingHorizontal: v1Space.optical14,
+  },
+  activityIconTile: {
+    width: 34,
+    height: 34,
+    borderRadius: v1Radius.chip,
+    backgroundColor: v1Colors.s2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activityCardBody: {
+    flex: 1,
+    gap: 2,
+  },
+  reactionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: v1Radius.full,
+    backgroundColor: v1Colors.s2,
+    borderWidth: borders.width,
+    borderColor: v1Colors.hairline,
+    paddingHorizontal: v1Space.sm + 2,
+    paddingVertical: v1Space.xs + 1,
+  },
+  reactionPillActive: {
+    borderColor: v1Colors.apricot,
+  },
   rowContainer: {
     flexDirection: 'row',
-    marginVertical: 3,
-    paddingHorizontal: spacing.sm,
+    marginVertical: 4,
+    paddingHorizontal: v1Space.lg,
     alignItems: 'flex-end',
   },
   rowMine: {
@@ -352,25 +469,25 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   avatarCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.pill,
+    width: 28,
+    height: 28,
+    borderRadius: v1Radius.full,
+    backgroundColor: v1Colors.s2,
+    borderWidth: borders.width,
+    borderColor: v1Colors.hairline,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 6,
+    marginRight: v1Space.sm,
     marginBottom: 2,
     overflow: 'hidden',
   },
   avatarImage: {
-    width: 32,
-    height: 32,
+    width: 28,
+    height: 28,
   },
-  avatarInitial: {
-    fontSize: fontSize.xs,
-    fontWeight: '700',
+  boldText: {
+    fontFamily: fonts.bold,
   },
-
-  // Bubble Wrapper
   bubbleWrapper: {
     maxWidth: '78%',
   },
@@ -380,98 +497,69 @@ const styles = StyleSheet.create({
   bubbleWrapperOther: {
     alignItems: 'flex-start',
   },
-  senderNickname: {
-    fontSize: fontSize.xs - 1,
-    fontWeight: '600',
-    marginBottom: 2,
-    marginLeft: 4,
+  senderMetaLine: {
+    marginBottom: 4,
+    marginLeft: 2,
   },
-
-  // Bubble Box
   bubbleBox: {
-    minHeight: layout.touch,
+    minHeight: 40,
     minWidth: layout.touch,
-    paddingHorizontal: spacing.sm + 4,
-    paddingVertical: spacing.xs + 2,
-    borderRadius: radius.lg,
+    paddingHorizontal: v1Space.optical14,
+    paddingVertical: v1Space.sm + 2,
+    borderRadius: v1Radius.chip,
   },
   bubbleBoxMine: {
-    borderBottomRightRadius: visualPrimitives.radii[4],
+    backgroundColor: v1Colors.apricot,
+    borderBottomRightRadius: v1Radius.bar,
   },
   bubbleBoxOther: {
-    borderBottomLeftRadius: visualPrimitives.radii[4],
+    backgroundColor: v1Colors.s2,
+    borderBottomLeftRadius: v1Radius.bar,
+  },
+  bubbleFailed: {
+    borderWidth: 1,
+    borderColor: v1Colors.danger,
+  },
+  replyQuoteBox: {
+    borderLeftWidth: space[1],
+    paddingLeft: v1Space.sm,
+    paddingVertical: 2,
+    marginBottom: v1Space.xs,
   },
   messageText: {
-    fontSize: fontSize.sm,
+    fontSize: 14,
     lineHeight: 20,
   },
   deletedText: {
-    fontSize: fontSize.xs,
     fontStyle: 'italic',
   },
-
-  // Attachments
   attachmentsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 4,
-    marginTop: spacing.xs,
+    marginTop: v1Space.xs,
   },
-  attachmentPressable: {
-    minHeight: layout.touch,
-    minWidth: layout.touch,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.md,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  attachmentThumbnail: {
-    width: 140,
-    height: 140,
-    borderRadius: radius.md,
-  },
-  attachmentFallback: {
-    backgroundColor: visualPrimitives.colors.blackWash,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  uploadOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mediaRetry: { minHeight: layout.touch, minWidth: layout.touch, justifyContent: 'center' },
   blockedImageContainer: {
     flexWrap: 'wrap',
     maxWidth: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.xs,
-    borderRadius: radius.sm,
+    padding: v1Space.xs,
+    borderRadius: v1Radius.chip,
     gap: 4,
+    backgroundColor: v1Colors.s1,
   },
-  blockedImageText: {
-    fontSize: fontSize.xs - 1,
-    fontWeight: '600',
+  mediaRetry: {
+    minHeight: layout.touch,
+    minWidth: layout.touch,
+    justifyContent: 'center',
   },
-
-  // Bubble Footer
   footerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    marginTop: 3,
+    marginTop: 4,
     gap: 4,
-  },
-  timeText: {
-    fontSize: 10,
-    fontWeight: '400',
   },
   statusIconWrap: {
     alignItems: 'center',
@@ -480,8 +568,6 @@ const styles = StyleSheet.create({
   sendingSpinner: {
     marginRight: 2,
   },
-
-  // Retry Button Row
   retryRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -489,8 +575,6 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 2,
   },
-  retryText: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
 });
+
+void visualPrimitives;

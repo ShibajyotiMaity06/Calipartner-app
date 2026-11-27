@@ -3,9 +3,9 @@
  * Single source of truth: docs/ui/DESIGN_SYSTEM_V1.md (Section 3 & Section 8)
  */
 import React from 'react';
+import * as RN from 'react-native';
 import {
   StyleSheet,
-  Text as RNText,
   View,
   type StyleProp,
   type TextProps as RNTextProps,
@@ -13,6 +13,8 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { colors, fonts, space, type DSColorToken, type DSTypeVariant, type } from './theme';
+
+const RNText = ('Text' in RN ? RN.Text : 'Text') as unknown as React.ComponentType<RNTextProps>;
 
 export interface TextProps extends RNTextProps {
   /** Design System v1 typographic variant */
@@ -60,7 +62,16 @@ export function Text({
   const useTabular = tabular ?? Boolean(specVariant?.includes('tabular-nums'));
   const fontFamily = italic && isDisplay ? fonts.displayItalic : spec.fontFamily;
 
-  const flatStyle = StyleSheet.flatten(style) as TextStyle | undefined;
+  const flatStyle = (
+    typeof StyleSheet.flatten === 'function'
+      ? StyleSheet.flatten(style)
+      : Array.isArray(style)
+        ? Object.assign(
+            {},
+            ...(style as Array<TextStyle | false | null | undefined>).filter(Boolean),
+          )
+        : style
+  ) as TextStyle | undefined;
   const baseStyle: TextStyle = {
     fontFamily,
     fontSize: spec.fontSize,

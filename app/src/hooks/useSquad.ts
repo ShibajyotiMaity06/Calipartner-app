@@ -5,11 +5,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentLocalDate } from './useCurrentLocalDate';
 import { diaryEvents } from '@/services/diaryEvents';
 import {
+  getSquadActivity,
+  getSquadCompare,
   getSquadToday,
   getSquadMemberDetails,
   getSquadMentions,
   getSquadUnreadCount,
 } from '@/services/squadService';
+import type { CompareRange } from '@calipartner/core';
 
 function useSquadRead<T>(
   roomId: string | null,
@@ -87,6 +90,23 @@ export function useSquadDetails(roomId: string | null, memberId: string | null, 
 }
 export function useSquadMentions(roomId: string | null, visible = true) {
   return useSquadRead(roomId, visible, getSquadMentions, '', 15000);
+}
+export function useSquadActivity(roomId: string | null, visible = true) {
+  return useSquadRead(roomId, visible, getSquadActivity, '', 30000);
+}
+export function useSquadCompare(
+  roomId: string | null,
+  leftId: string | null,
+  rightId: string | null,
+  range: CompareRange,
+  visible = true,
+) {
+  const enabled = visible && Boolean(roomId && leftId && rightId);
+  const read = useCallback(
+    (room: string) => getSquadCompare(room, leftId!, rightId!, range),
+    [leftId, rightId, range],
+  );
+  return useSquadRead(roomId, enabled, read, `${leftId ?? ''}:${rightId ?? ''}:${range}`);
 }
 
 /** Count only: viewing Home never acknowledges or fetches chat history. */

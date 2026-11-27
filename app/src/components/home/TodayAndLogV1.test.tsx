@@ -111,6 +111,7 @@ vi.mock('@calipartner/ui/v1', async () => {
       React.createElement('Ring', rest, children as React.ReactNode),
     ScaleIcon: 'ScaleIcon',
     SearchIcon: 'SearchIcon',
+    SettingsIcon: 'SettingsIcon',
     Sheet: ({ children, ...rest }: Record<string, unknown>) =>
       React.createElement('Sheet', rest, children as React.ReactNode),
     SunIcon: 'SunIcon',

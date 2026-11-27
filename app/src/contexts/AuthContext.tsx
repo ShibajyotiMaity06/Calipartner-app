@@ -40,6 +40,8 @@ interface AuthContextValue {
   createProfile: (input: CreateProfileInput) => Promise<{ error: Error | null }>;
   updateProfile: (input: UpdateProfileInput) => Promise<{ error: Error | null }>;
   changeUsername: (newUsername: string) => Promise<{ error: Error | null }>;
+  updateEmail: (newEmail: string) => Promise<{ error: Error | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -450,6 +452,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [fetchProfile, user?.id],
   );
 
+  const updateEmail = useCallback(async (newEmail: string) => {
+    try {
+      const supabase = getSupabase();
+      const { error } = await supabase.auth.updateUser({ email: newEmail.trim() });
+      if (error) return { error: formatAuthError(error.message) };
+      return { error: null };
+    } catch (e: unknown) {
+      return { error: e instanceof Error ? e : new Error(String(e)) };
+    }
+  }, []);
+
+  const updatePassword = useCallback(async (newPassword: string) => {
+    try {
+      const supabase = getSupabase();
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) return { error: formatAuthError(error.message) };
+      return { error: null };
+    } catch (e: unknown) {
+      return { error: e instanceof Error ? e : new Error(String(e)) };
+    }
+  }, []);
+
   const needsProfileSetup = Boolean(
     user && !profile && profileCheckedUserId === user.id && !isLoading,
   );
@@ -475,6 +499,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         createProfile,
         updateProfile,
         changeUsername,
+        updateEmail,
+        updatePassword,
         refreshProfile,
       }}
     >

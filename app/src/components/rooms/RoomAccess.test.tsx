@@ -33,6 +33,68 @@ vi.mock('react-native', () => ({
     },
   },
 }));
+vi.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: 'SafeAreaView',
+  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
+}));
+vi.mock('@calipartner/ui/v1', () => ({
+  Text: 'Text',
+  AvatarRing: 'AvatarRing',
+  Chip: 'Chip',
+  Segmented: 'Segmented',
+  PrimaryButton: 'PrimaryButton',
+  SecondaryButton: 'SecondaryButton',
+  IconButton: 'IconButton',
+  ProgressBar: 'ProgressBar',
+  Sheet: ({
+    visible,
+    testID,
+    children,
+  }: {
+    visible?: boolean;
+    testID?: string;
+    children?: React.ReactNode;
+  }) => (visible ? <div data-testid={testID}>{children}</div> : null),
+  BellIcon: 'BellIcon',
+  ChatBubbleIcon: 'ChatBubbleIcon',
+  CheckIcon: 'CheckIcon',
+  ChevronDownIcon: 'ChevronDownIcon',
+  ChevronLeftIcon: 'ChevronLeftIcon',
+  ChevronRightIcon: 'ChevronRightIcon',
+  CloseIcon: 'CloseIcon',
+  DropletIcon: 'DropletIcon',
+  DumbbellIcon: 'DumbbellIcon',
+  InfoCircleIcon: 'InfoCircleIcon',
+  LockIcon: 'LockIcon',
+  PlusIcon: 'PlusIcon',
+  PulseIcon: 'PulseIcon',
+  SettingsIcon: 'SettingsIcon',
+  SlidersIcon: 'SlidersIcon',
+  SwapIcon: 'SwapIcon',
+  UsersIcon: 'UsersIcon',
+  UtensilsIcon: 'UtensilsIcon',
+  borders: { width: 1 },
+  colors: {
+    bg0: '#0E0B08',
+    s1: '#1A1511',
+    s2: '#241E18',
+    s3: '#2F2821',
+    hairline: '#3A3228',
+    hairlineLit: '#85755F',
+    textHi: '#F7F0E7',
+    textMid: '#C9BCAC',
+    textLo: '#9A8E7F',
+    textOff: '#6F6558',
+    apricot: '#F4B67D',
+    apricotPressed: '#E19A5C',
+    onBrand: '#1C1109',
+    danger: '#F65C58',
+  },
+  fonts: { regular: 'Manrope', medium: 'Manrope', semibold: 'Manrope', bold: 'Manrope' },
+  layout: { screenPaddingX: 24, minTouchTarget: 44 },
+  radius: { chip: 16, card: 22, hero: 28, sheet: 32, bar: 4, full: 999 },
+  space: { xs: 4, sm: 8, md: 12, optical14: 14, lg: 16, xl: 20, xxl: 24 },
+}));
 vi.mock('expo-router', async () => {
   const React = await import('react');
   const router = { push: state.push, navigate: state.navigate, setParams: state.setParams };
@@ -108,6 +170,7 @@ vi.mock('@/hooks/useRoomChat', () => ({
 }));
 vi.mock('@/hooks/useSquad', () => ({
   useSquadDetails: () => ({ data: null, loading: false, error: false, refresh: state.refresh }),
+  useSquadActivity: () => ({ data: [], loading: false, error: false, refresh: state.refresh }),
   useSquadToday: () => ({
     data: {
       room_id: 'room',
@@ -149,6 +212,7 @@ vi.mock('@/components/rooms', () =>
       'PaywallModal',
       'RequestsInboxModal',
       'RoomHeader',
+      'RoomProgressView',
       'RoomSettingsModal',
       'BlockUserModal',
       'ReportModal',
@@ -217,21 +281,14 @@ it('allows either of exactly two comparison slots to select another member', asy
   );
   expect(state.push).toHaveBeenLastCalledWith('/squad/compare?room=room&left=peer2&right=peer1');
 });
-it('views one selected person inline without opening Compare and returns Back to the navigator', async () => {
+it('opens the Squad Member sheet when tapping a member on Today without leaving the tab', async () => {
   state.count = 3;
   await act(async () => {
     tree = create(<RoomScreen />);
   });
-  await act(async () => tree.root.findByProps({ testID: 'squad-choose-person' }).props.onPress());
-  const picker = tree.root.findByType('SquadMemberPicker' as React.ElementType);
-  expect(picker.props.excludedId).toBe('');
-  await act(async () => {
-    picker.props.onSelect('peer2');
-    picker.props.onClose();
-  });
-  expect(tree.root.findByProps({ testID: 'squad-choose-person' }).props.label).toBe('Person 2');
+  await act(async () => tree.root.findByProps({ testID: 'squad-member-peer2' }).props.onPress());
+  expect(tree.root.findByProps({ testID: 'squad-member-sheet' })).toBeDefined();
   expect(state.push).not.toHaveBeenCalled();
-  expect(state.back?.()).toBe(false);
   expect(state.navigate).not.toHaveBeenCalled();
 });
 it('opens the tagged room directly in paid chat and passes its exact message ID', async () => {
@@ -288,7 +345,7 @@ it('keeps just Overview, Leaderboard and Chat in the squad header for every room
     tree.root
       .findByProps({ testID: 'room-tab' })
       .props.options.map((item: { value: string }) => item.value),
-  ).toEqual(['today', 'progress', 'chat']);
+  ).toEqual(['today', 'progress']);
 });
 
 it('cancels a Home create/join sheet back to Home instead of leaving you on the Squad screen', async () => {

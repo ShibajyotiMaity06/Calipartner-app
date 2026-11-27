@@ -8,11 +8,12 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { Button, getTabBarHeight, homeLayout } from '@calipartner/ui';
 import {
   Chip,
   Segmented,
+  SettingsIcon,
   ShareUploadIcon,
   Text as V1Text,
   borders as v1Borders,
@@ -46,6 +47,7 @@ import { t } from '@/i18n';
 const RANGES: ProgressDateRange[] = ['7d', '30d', '90d', 'all'];
 
 export default function ProgressScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
   const { profile } = useAuth();
@@ -141,15 +143,28 @@ export default function ProgressScreen() {
               {t('progressV1.title')}
             </V1Text>
 
-            <Pressable
-              onPress={() => setShowSummary(true)}
-              accessibilityRole="button"
-              accessibilityLabel={t('progressV1.shareLabel')}
-              style={({ pressed }) => [styles.shareBtn, pressed ? styles.pressedBg : null]}
-              testID="btn-progress-share"
-            >
-              <ShareUploadIcon size={18} color={v1Colors.textHi} />
-            </Pressable>
+            <View style={styles.headerActionGroup}>
+              <Pressable
+                onPress={() => router.push('/settings' as Href)}
+                hitSlop={4}
+                accessibilityRole="button"
+                accessibilityLabel={t('settingsV1.openSettings')}
+                style={({ pressed }) => [styles.shareBtn, pressed ? styles.pressedBg : null]}
+                testID="btn-progress-settings"
+              >
+                <SettingsIcon size={18} color={v1Colors.textHi} />
+              </Pressable>
+
+              <Pressable
+                onPress={() => setShowSummary(true)}
+                accessibilityRole="button"
+                accessibilityLabel={t('progressV1.shareLabel')}
+                style={({ pressed }) => [styles.shareBtn, pressed ? styles.pressedBg : null]}
+                testID="btn-progress-share"
+              >
+                <ShareUploadIcon size={18} color={v1Colors.textHi} />
+              </Pressable>
+            </View>
           </View>
 
           {/* Category Strip */}
@@ -317,6 +332,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: v1Space.md,
+  },
+  headerActionGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: v1Space.sm,
   },
   shareBtn: {
     width: 40,

@@ -276,6 +276,7 @@ export default function TodayScreen() {
           onUpgradePress={() => router.push('/paywall' as Href)}
           onCoinPress={() => router.push('/wallet' as Href)}
           onProfilePress={() => router.push('/(tabs)/me' as Href)}
+          onSettingsPress={() => router.push('/settings' as Href)}
         />
 
         <TodayDayCardV1

@@ -1,297 +1,334 @@
-import { useTheme as useAppearance } from '@calipartner/ui/theme';
-import { NavigationIcon, avatarLayout, radius, space } from '@calipartner/ui';
-import { Ionicons } from '@expo/vector-icons';
-import { PublicAvatar } from '@/components/avatar/PublicAvatar';
 import React, { useCallback, useState } from 'react';
-import { RefreshControl, SafeAreaView, ScrollView, View } from 'react-native';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, Text } from '@calipartner/ui';
-import { HeaderActions } from '@/components/HeaderActions';
-import { useSquadToday, useSquadDetails } from '@/hooks/useSquad';
-import { useSubscription } from '@/hooks/useSubscription';
 import {
-  MealContent,
-  mealSections,
-  memberName,
-  MetricValue,
-  PeopleSelector,
-  PlusDetailsCard,
-  ProgressTrack,
-  WorkoutContent,
-  useSquadStyles,
-} from '@/components/rooms/SquadViews';
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Share,
+  StyleSheet,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { type CompareRange, type TrackingPreferences } from '@calipartner/core';
+import {
+  ChevronLeftIcon,
+  InfoCircleIcon,
+  PrimaryButton,
+  Segmented,
+  ShareUploadIcon,
+  Text,
+  colors,
+  fonts,
+  layout,
+  radius,
+  space,
+} from '@calipartner/ui/v1';
+import { TrackingPreferencesSheet } from '@/components/rooms/TrackingPreferencesSheet';
+import {
+  CompareDaysTogetherCard,
+  CompareHeadToHeadCard,
+  CompareMacrosCard,
+  CompareMealsProCard,
+  CompareOverviewHeroCard,
+  CompareProLockedCard,
+  CompareRulesSheetV1,
+  CompareScrolledContextBar,
+  CompareTodayView,
+  CompareWorkoutsProCard,
+  rangeDisplayLabel,
+} from '@/components/rooms/CompareV1Components';
+import { useSquadCompare } from '@/hooks/useSquad';
+import { useTrackingPreferences } from '@/hooks/useTrackingPreferences';
 import { t } from '@/i18n';
 
-export default function SquadCompareScreen() {
-  const styles = useSquadStyles();
+const RANGES: CompareRange[] = ['today', '7d', '30d'];
+const SCROLLED_BAR_Y = 140;
 
-  const { colors: dark } = useAppearance();
+export default function CompareScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ room?: string; left?: string; right?: string }>();
+  const roomId = typeof params.room === 'string' ? params.room : null;
+  const leftId = typeof params.left === 'string' ? params.left : null;
+  const rightId = typeof params.right === 'string' ? params.right : null;
 
-  const params = useLocalSearchParams<{ room: string; left?: string; right?: string }>(),
-    router = useRouter();
-  const [visible, setVisible] = useState(false),
-    [picker, setPicker] = useState<'left' | 'right' | null>(null),
-    [leftId, setLeftId] = useState(params.left),
-    [rightId, setRightId] = useState(params.right);
+  const [visible, setVisible] = useState(false);
   useFocusEffect(
     useCallback(() => {
       setVisible(true);
       return () => setVisible(false);
     }, []),
   );
-  const { hasActiveAccess, loading: checkingPlan } = useSubscription();
-  const squad = useSquadToday(params.room ?? null, visible),
-    members = squad.data?.members ?? [];
-  const left =
-    members.find((member) => member.user_id === leftId) ??
-    members.find((member) => member.is_self) ??
-    members[0];
-  const right =
-    members.find((member) => member.user_id === rightId && member.user_id !== left?.user_id) ??
-    members.find((member) => member.user_id !== left?.user_id);
-  const first = useSquadDetails(
-      params.room ?? null,
-      left?.user_id ?? null,
-      visible && hasActiveAccess,
-    ),
-    second = useSquadDetails(
-      params.room ?? null,
-      right?.user_id ?? null,
-      visible && hasActiveAccess,
-    );
-  const back = () =>
-    router.canGoBack()
-      ? router.back()
-      : router.replace({ pathname: '/(tabs)/room', params: { room: params.room } });
-  const refresh = () => {
-    void squad.refresh();
-    if (hasActiveAccess) {
-      void first.refresh();
-      void second.refresh();
+
+  const [range, setRange] = useState<CompareRange>('7d');
+  const [scrolledPastHero, setScrolledPastHero] = useState(false);
+  const [showRules, setShowRules] = useState(false);
+  const [editingTracking, setEditingTracking] = useState(false);
+
+  const tracking = useTrackingPreferences();
+  const compare = useSquadCompare(roomId, leftId, rightId, range, visible);
+
+  const rangeOptions = [
+    { value: 'today' as CompareRange, label: t('compareV1.rangeToday') },
+    { value: '7d' as CompareRange, label: t('compareV1.range7d') },
+    { value: '30d' as CompareRange, label: t('compareV1.range30d') },
+  ];
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/room' as Href);
     }
   };
+
+  const handleShare = async () => {
+    const payload = compare.data;
+    if (!payload) return;
+    try {
+      await Share.share({
+        message: `${payload.left.name} vs ${payload.right.name} (${rangeDisplayLabel(range)}): ${payload.left.overall_pct}% vs ${payload.right.overall_pct}% — ${payload.in_sync_pct}% in sync on CaliPartner`,
+      });
+    } catch {
+      // Cancelled share dialog
+    }
+  };
+
+  const cycleRange = () => {
+    const idx = RANGES.indexOf(range);
+    const next = RANGES[(idx + 1) % RANGES.length] ?? '7d';
+    setRange(next);
+  };
+
+  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    setScrolledPastHero(event.nativeEvent.contentOffset.y > SCROLLED_BAR_Y);
+  };
+
+  const data = compare.data;
+
   return (
-    <SafeAreaView style={styles.screen} testID="screen-squad-compare">
+    <View style={styles.root} testID="screen-compare">
+      <View style={[styles.topBar, { paddingTop: Math.max(space.sm, insets.top + 6) }]}>
+        <Pressable
+          onPress={handleBack}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel={t('squadDesign.back')}
+          style={({ pressed }) => [styles.circleBtn, pressed ? styles.pressedBtn : null]}
+          testID="compare-back"
+        >
+          <ChevronLeftIcon size={18} color={colors.textHi} />
+        </Pressable>
+
+        <Text variant="titleS" color="textHi" accessibilityRole="header" style={styles.headerTitle}>
+          {t('compareV1.title')}
+        </Text>
+
+        <Pressable
+          onPress={() => void handleShare()}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel={t('progressV1.shareLabel')}
+          style={({ pressed }) => [styles.circleBtn, pressed ? styles.pressedBtn : null]}
+          testID="compare-share"
+        >
+          <ShareUploadIcon size={18} color={colors.textHi} />
+        </Pressable>
+      </View>
+
+      {data && scrolledPastHero && range !== 'today' ? (
+        <CompareScrolledContextBar
+          leftName={data.left.name}
+          rightName={data.right.name}
+          rangeLabel={rangeDisplayLabel(range)}
+          progressPct={data.left.overall_pct}
+          onCycleRange={cycleRange}
+        />
+      ) : null}
+
       <ScrollView
-        contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={squad.loading} onRefresh={refresh} />}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={onScroll}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: Math.max(space.xl, insets.bottom + space.lg) },
+        ]}
+        refreshControl={
+          <RefreshControl
+            refreshing={compare.loading}
+            onRefresh={() => void compare.refresh()}
+            tintColor={colors.apricot}
+          />
+        }
       >
-        <View style={styles.spread}>
-          <View style={styles.row}>
-            <Button
-              variant="tertiary"
-              fullWidth={false}
-              label={t('squadDesign.back')}
-              iconOnly
-              icon={<NavigationIcon action="back" />}
-              onPress={back}
-              style={styles.back}
-              accessibilityRole="button"
-              accessibilityLabel={t('squadDesign.back')}
-              testID="compare-back"
-            />
-            <View>
-              <Text variant="bodyS">{t('tabs.room')}</Text>
-              <Text variant="title2">{t('squadDesign.compare')}</Text>
+        <View style={styles.innerWrap}>
+          {!roomId || !leftId || !rightId ? (
+            <View style={styles.stateBox}>
+              <Text variant="body" color="textMid" accessibilityRole="alert">
+                {t('common.errorBody')}
+              </Text>
+              <PrimaryButton title={t('squadDesign.back')} onPress={handleBack} />
             </View>
-          </View>
-          <HeaderActions />
-        </View>
-        {squad.error ? (
-          <View style={styles.card}>
-            <Text accessibilityRole="alert">{t('common.errorBody')}</Text>
-            <Button
-              variant="secondary"
-              label={t('common.retry')}
-              onPress={refresh}
-              testID="compare-retry"
-            />
-          </View>
-        ) : squad.loading && !squad.data ? (
-          <Text>{t('common.loading')}</Text>
-        ) : !left || !right ? (
-          <Text>{t('common.unavailable')}</Text>
-        ) : (
-          <>
-            <View style={{ position: 'relative', zIndex: 100 }}>
-              <PeopleSelector
-                left={left}
-                right={right}
-                members={members}
-                open={picker}
-                onChoose={(side) => setPicker((current) => (current === side ? null : side))}
-                onSelect={(side, id) => {
-                  setLeftId(side === 'left' ? id : left.user_id);
-                  setRightId(side === 'right' ? id : right.user_id);
-                  setPicker(null);
-                }}
+          ) : compare.error && !data ? (
+            <View style={styles.stateBox} testID="compare-error-state">
+              <Text variant="body" color="textMid" accessibilityRole="alert">
+                {t('common.errorBody')}
+              </Text>
+              <PrimaryButton
+                title={t('common.retry')}
+                onPress={() => void compare.refresh()}
+                testID="retry-compare"
               />
             </View>
-            <Text variant="bodyS">{t('squadDesign.ownGoals')}</Text>
-            <View style={[styles.card, styles.columns]}>
-              {[left, right].map((member, index) => {
-                const isLockedOtherAvatar = !hasActiveAccess && !member.is_self;
-                return (
-                  <View
-                    key={member.user_id}
-                    style={styles.column}
-                    accessible
-                    accessibilityLabel={
-                      member.score == null
-                        ? memberName(member) + ', ' + t('squadDesign.noGoals')
-                        : t('squadDesign.scoreSummary', {
-                            name: memberName(member),
-                            score: member.score,
-                          })
-                    }
-                  >
-                    {isLockedOtherAvatar ? (
-                      <View
-                        style={{
-                          height: avatarLayout.compareHeight,
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          gap: space[1],
-                        }}
-                        testID={`locked-avatar-${member.user_id}`}
-                      >
-                        <View
-                          style={{
-                            width: 52,
-                            height: 52,
-                            borderRadius: radius.full,
-                            backgroundColor: dark.s2,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            borderWidth: 1,
-                            borderColor: dark.hairlineLit,
-                          }}
-                        >
-                          <Ionicons name="lock-closed" size={20} color={dark.copper} />
-                        </View>
-                        <Text variant="micro" color={dark.textMid}>
-                          {t('squadDesign.unlock')}
-                        </Text>
-                      </View>
-                    ) : (
-                      <PublicAvatar userId={member.user_id} name={memberName(member)} />
-                    )}
-                    <Text>{memberName(member)}</Text>
-                    <Text variant="numeralM" tabular>
-                      {member.score == null
-                        ? '—'
-                        : t('squadDesign.percent', { value: member.score })}
-                    </Text>
-                    <ProgressTrack
-                      percent={member.score}
-                      color={index === 0 ? dark.iris : dark.teal}
-                    />
-                  </View>
-                );
-              })}
+          ) : compare.loading && !data ? (
+            <View style={styles.stateBox} testID="compare-loading-state">
+              <Text variant="body" color="textLo">
+                {t('common.loading')}
+              </Text>
             </View>
-            <View style={styles.card}>
-              <Text variant="heading">{t('squadDesign.macros')}</Text>
-              {(['calories', 'protein', 'carbs', 'fat'] as const).map((metric) => (
-                <View key={metric} style={styles.metricGroup}>
-                  <Text variant="bodyS" nutrient={metric}>
-                    {t(`squadDesign.${metric}`)}
-                  </Text>
-                  <View style={styles.columns}>
-                    <View style={styles.column}>
-                      <MetricValue member={left} metric={metric} color={dark.iris} />
-                    </View>
-                    <View style={styles.column}>
-                      <MetricValue member={right} metric={metric} color={dark.teal} />
-                    </View>
-                  </View>
-                </View>
-              ))}
-            </View>
-            <View style={styles.card}>
-              <Text variant="heading">{t('squadDesign.steps')}</Text>
-              <View style={styles.columns}>
-                <View style={styles.column}>
-                  <MetricValue member={left} metric="steps" color={dark.iris} />
-                </View>
-                <View style={styles.column}>
-                  <MetricValue member={right} metric="steps" color={dark.teal} />
-                </View>
-              </View>
-            </View>
-            <View style={styles.card}>
-              <Text variant="heading">{t('squadDesign.water')}</Text>
-              <View style={styles.columns}>
-                <View style={styles.column}>
-                  <MetricValue member={left} metric="water" color={dark.iris} />
-                </View>
-                <View style={styles.column}>
-                  <MetricValue member={right} metric="water" color={dark.teal} />
-                </View>
-              </View>
-            </View>
-            {checkingPlan ? (
-              <Text>{t('common.loading')}</Text>
-            ) : !hasActiveAccess ? (
-              <PlusDetailsCard onUpgrade={() => router.push('/paywall')} />
-            ) : first.error || second.error ? (
-              <View style={styles.card}>
-                <Text accessibilityRole="alert">{t('common.errorBody')}</Text>
-                <Button
-                  variant="secondary"
-                  label={t('common.retry')}
-                  onPress={refresh}
-                  testID="compare-details-retry"
-                />
-              </View>
-            ) : (first.loading && !first.data) || (second.loading && !second.data) ? (
-              <Text>{t('common.loading')}</Text>
-            ) : first.data && second.data ? (
+          ) : data ? (
+            range === 'today' ? (
               <>
-                <View style={styles.card}>
-                  <Text variant="heading">{t('squadDesign.meals')}</Text>
-                  {mealSections.map((section) => (
-                    <View key={section} style={styles.metricGroup}>
-                      <Text>{t(`diary.sections.${section}`)}</Text>
-                      <View style={styles.columns}>
-                        <View style={styles.column}>
-                          <Text variant="label">{memberName(left)}</Text>
-                          <MealContent
-                            roomId={params.room}
-                            memberId={left.is_self ? undefined : left.user_id}
-                            meal={first.data!.meals.find((meal) => meal.section === section)}
-                          />
-                        </View>
-                        <View style={styles.column}>
-                          <Text variant="label">{memberName(right)}</Text>
-                          <MealContent
-                            roomId={params.room}
-                            memberId={right.is_self ? undefined : right.user_id}
-                            meal={second.data!.meals.find((meal) => meal.section === section)}
-                          />
-                        </View>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-                <View style={styles.card}>
-                  <Text variant="heading">{t('squadDesign.workouts')}</Text>
-                  <View style={styles.columns}>
-                    <View style={styles.column}>
-                      <Text variant="label">{memberName(left)}</Text>
-                      <WorkoutContent workouts={first.data.workouts} />
-                    </View>
-                    <View style={styles.column}>
-                      <Text variant="label">{memberName(right)}</Text>
-                      <WorkoutContent workouts={second.data.workouts} />
-                    </View>
-                  </View>
-                </View>
+                <Segmented
+                  options={rangeOptions}
+                  value={range}
+                  onChange={(next) => {
+                    setScrolledPastHero(false);
+                    setRange(next);
+                  }}
+                  testID="compare-range-segmented"
+                />
+
+                <CompareTodayView
+                  data={data}
+                  onOpenCustomizeTrackers={() => setEditingTracking(true)}
+                />
               </>
-            ) : null}
-          </>
-        )}
+            ) : (
+              <>
+                <CompareOverviewHeroCard data={data} />
+
+                <Segmented
+                  options={rangeOptions}
+                  value={range}
+                  onChange={(next) => {
+                    setScrolledPastHero(false);
+                    setRange(next);
+                  }}
+                  testID="compare-range-segmented"
+                />
+
+                <CompareDaysTogetherCard data={data} />
+
+                <CompareHeadToHeadCard items={data.head_to_head} />
+
+                <Pressable
+                  onPress={() => setShowRules(true)}
+                  hitSlop={6}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('compareV1.howCalculated')}
+                  style={styles.howRow}
+                  testID="btn-how-compare-works"
+                >
+                  <InfoCircleIcon size={15} color={colors.apricot} />
+                  <Text variant="meta" color="apricot" style={styles.howText}>
+                    {t('compareV1.howCalculated')}
+                  </Text>
+                </Pressable>
+
+                <CompareMacrosCard macros={data.macros} />
+
+                {data.locked ? (
+                  <CompareProLockedCard
+                    partnerName={data.right.name}
+                    onUnlock={() => router.push('/paywall' as Href)}
+                  />
+                ) : (
+                  <>
+                    <CompareWorkoutsProCard data={data} />
+                    <CompareMealsProCard data={data} />
+                  </>
+                )}
+              </>
+            )
+          ) : null}
+        </View>
       </ScrollView>
-    </SafeAreaView>
+
+      <CompareRulesSheetV1
+        visible={showRules}
+        partnerName={data?.right.name ?? t('compareV1.you')}
+        onClose={() => setShowRules(false)}
+      />
+
+      {editingTracking ? (
+        <TrackingPreferencesSheet
+          enabled={tracking.enabled}
+          onClose={() => setEditingTracking(false)}
+          onSave={async (next: TrackingPreferences) => {
+            await tracking.save(next);
+            await compare.refresh();
+          }}
+        />
+      ) : null}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: colors.bg0,
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: layout.screenPaddingX,
+    paddingBottom: space.sm,
+    backgroundColor: colors.bg0,
+  },
+  circleBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.full,
+    backgroundColor: colors.s1,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pressedBtn: {
+    backgroundColor: colors.s2,
+  },
+  headerTitle: {
+    fontFamily: fonts.semibold,
+    fontSize: 17,
+  },
+  scrollContent: {
+    paddingHorizontal: layout.screenPaddingX,
+    paddingTop: space.sm,
+  },
+  innerWrap: {
+    width: '100%',
+    maxWidth: 440,
+    alignSelf: 'center',
+    gap: space.lg,
+  },
+  stateBox: {
+    paddingVertical: space.xl,
+    gap: space.md,
+  },
+  howRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    paddingVertical: space.xs,
+  },
+  howText: {
+    fontFamily: fonts.semibold,
+  },
+});

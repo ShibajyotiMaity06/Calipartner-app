@@ -1,6 +1,3 @@
-import { visualPrimitives } from '@calipartner/ui/tokens';
-import { Button } from '@calipartner/ui';
-import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -11,12 +8,23 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Text, type as typography } from '@calipartner/ui';
-import { onboardingLayout as layout } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
+import { Button, onboardingLayout as layout, type as typography } from '@calipartner/ui';
+import {
+  ArrowRightIcon,
+  CloseIcon,
+  LockIcon,
+  PlusIcon,
+  Text as V1Text,
+  borders,
+  colors as v1Colors,
+  fonts,
+  radius as v1Radius,
+  space as v1Space,
+} from '@calipartner/ui/v1';
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 import { ChatMediaPickerModal, type SelectedMediaItem } from './ChatMediaPickerModal';
 
 export interface ChatComposerProps {
@@ -28,6 +36,9 @@ export interface ChatComposerProps {
   disabled?: boolean;
   allowMedia?: boolean;
   disabledReason?: string;
+  placeholder?: string;
+  prefillText?: string | null;
+  onPrefillConsumed?: () => void;
   termsAccepted: boolean;
   onRequireTerms: () => void;
   testID?: string;
@@ -42,17 +53,31 @@ export function ChatComposer({
   disabled = false,
   allowMedia = true,
   disabledReason,
+  placeholder,
+  prefillText,
+  onPrefillConsumed,
   termsAccepted,
   onRequireTerms,
   testID = 'chat-composer',
 }: ChatComposerProps) {
-  const { colors } = useTheme();
   const [text, setText] = useState('');
   const [selectedMedia, setSelectedMedia] = useState<SelectedMediaItem[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [showPickerModal, setShowPickerModal] = useState(false);
   const [sendError, setSendError] = useState(false);
   const [tagOpen, setTagOpen] = useState(false);
+
+  useEffect(() => {
+    if (prefillText) {
+      setText(prefillText);
+      onPrefillConsumed?.();
+    }
+  }, [prefillText, onPrefillConsumed]);
+
+  useEffect(() => {
+    if (!allowMedia) setSelectedMedia([]);
+  }, [allowMedia]);
+
   const tagQuery = /(?:^|\s)@([a-zA-Z0-9_.]*)$/.exec(text)?.[1] ?? '';
   const tagMembers = mentionMembers.filter((member) =>
     (member.username + ' ' + member.nickname)
@@ -60,9 +85,6 @@ export function ChatComposer({
       .includes(tagQuery.toLocaleLowerCase()),
   );
 
-  useEffect(() => {
-    if (!allowMedia) setSelectedMedia([]);
-  }, [allowMedia]);
   const canSend = !disabled && !isSending && (text.trim().length > 0 || selectedMedia.length > 0);
   const remainingChars = 2000 - text.length;
   const isNearLimit = text.length > 1800;
@@ -104,45 +126,34 @@ export function ChatComposer({
   };
 
   return (
-    <View
-      style={[styles.composerContainer, { backgroundColor: colors.background }]}
-      testID={testID}
-    >
-      {reply && (
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            padding: spacing.sm,
-            backgroundColor: colors.surfaceAlt,
-          }}
-          testID="chat-reply-draft"
-        >
-          <View style={{ flex: 1 }}>
-            <Text>{t('aha.replying', { name: reply.name })}</Text>
-            <Text numberOfLines={2}>{reply.text || t('aha.attachment')}</Text>
+    <View style={styles.composerContainer} testID={testID}>
+      {reply ? (
+        <View style={styles.replyBanner} testID="chat-reply-draft">
+          <View style={styles.replyTextCol}>
+            <V1Text variant="meta" color="textLo">
+              {t('aha.replying', { name: reply.name })}
+            </V1Text>
+            <V1Text variant="body" color="textHi" numberOfLines={1}>
+              {reply.text || t('aha.attachment')}
+            </V1Text>
           </View>
           <Button
             variant="tertiary"
             fullWidth={false}
             label={t('aha.cancelReply')}
             iconOnly
-            icon={<Ionicons name="close" size={layout.icon} color={colors.text} />}
+            icon={<CloseIcon size={16} color={v1Colors.textHi} />}
             onPress={onCancelReply}
             disabled={isSending}
             accessibilityRole="button"
             accessibilityLabel={t('aha.cancelReply')}
-            style={{
-              minHeight: layout.touch,
-              minWidth: layout.touch,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            style={styles.cancelReplyBtn}
             testID="cancel-chat-reply"
           />
         </View>
-      )}
-      {tagOpen && !disabled && (
+      ) : null}
+
+      {tagOpen && !disabled ? (
         <View testID="chat-tag-picker">
           <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: layout.touch * 4 }}>
             {tagMembers.map((member) => (
@@ -176,27 +187,24 @@ export function ChatComposer({
             ))}
           </ScrollView>
         </View>
-      )}
-      {sendError ? (
-        <Text
-          accessibilityRole="alert"
-          style={[styles.disabledNoticeText, { color: colors.danger }]}
-        >
-          {t('setup.sendMediaError')}
-        </Text>
       ) : null}
-      {/* Disabled reason notice (e.g. read-only dormant room or paused locked room) */}
-      {disabled && Boolean(disabledReason) && (
-        <View style={[styles.disabledNoticeWrap, { backgroundColor: colors.surfaceAlt }]}>
-          <Ionicons name="lock-closed-outline" size={14} color={colors.textMuted} />
-          <Text style={[styles.disabledNoticeText, { color: colors.textMuted }]}>
-            {disabledReason}
-          </Text>
-        </View>
-      )}
 
-      {/* Selected media preview strip */}
-      {selectedMedia.length > 0 && (
+      {sendError ? (
+        <V1Text variant="meta" color="danger" accessibilityRole="alert">
+          {t('setup.sendMediaError')}
+        </V1Text>
+      ) : null}
+
+      {disabled && Boolean(disabledReason) ? (
+        <View style={styles.disabledNoticeWrap}>
+          <LockIcon size={13} color={v1Colors.textLo} />
+          <V1Text variant="meta" color="textLo">
+            {disabledReason}
+          </V1Text>
+        </View>
+      ) : null}
+
+      {selectedMedia.length > 0 ? (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -207,7 +215,7 @@ export function ChatComposer({
             <View key={idx} style={styles.previewCard} testID={`composer-preview-${idx}`}>
               {item.mimeType.startsWith('video/') ? (
                 <View style={styles.previewImage}>
-                  <Ionicons name="play-circle-outline" size={32} color={colors.text} />
+                  <Ionicons name="play-circle-outline" size={32} color={v1Colors.textHi} />
                 </View>
               ) : (
                 <Image source={{ uri: item.uri }} style={styles.previewImage} resizeMode="cover" />
@@ -226,46 +234,40 @@ export function ChatComposer({
               />
             </View>
           ))}
-          {selectedMedia.length < 5 && (
+          {selectedMedia.length < 5 ? (
             <Pressable
               onPress={handlePressAttach}
-              style={[
-                styles.addMoreCard,
-                { borderColor: colors.border, backgroundColor: colors.surfaceAlt },
-              ]}
+              style={styles.addMoreCard}
               accessibilityRole="button"
               accessibilityLabel="Add another photo"
               testID="btn-add-more-media"
             >
-              <Ionicons name="add" size={20} color={colors.accent} />
-              <Text style={[styles.addMoreText, { color: colors.accent }]}>
+              <PlusIcon size={18} color={v1Colors.apricot} />
+              <V1Text variant="micro" color="apricot">
                 {selectedMedia.length}/5
-              </Text>
+              </V1Text>
             </Pressable>
-          )}
+          ) : null}
         </ScrollView>
-      )}
+      ) : null}
 
-      {/* TextInput bar row */}
       <View style={styles.inputBarRow}>
-        {/* Camera / Photo Button */}
         <Button
           variant="tertiary"
           fullWidth={false}
           label={t(allowMedia ? 'repairs.chooseMedia' : 'setup.mediaPro')}
           iconOnly
           icon={
-            <Ionicons
-              name="attach-outline"
-              size={22}
-              color={selectedMedia.length >= 5 ? colors.textMuted : colors.accent}
+            <PlusIcon
+              size={18}
+              color={selectedMedia.length >= 5 || !allowMedia ? v1Colors.textOff : v1Colors.textHi}
             />
           }
           onPress={handlePressAttach}
           disabled={disabled || !allowMedia || selectedMedia.length >= 5}
           style={[
             styles.iconBtn,
-            (disabled || !allowMedia || selectedMedia.length >= 5) && styles.btnDisabled,
+            disabled || !allowMedia || selectedMedia.length >= 5 ? styles.btnDisabled : null,
           ]}
           accessibilityRole="button"
           accessibilityLabel={t(allowMedia ? 'repairs.chooseMedia' : 'setup.mediaPro')}
@@ -273,8 +275,7 @@ export function ChatComposer({
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         />
 
-        {/* Text TextInput */}
-        <View style={[styles.inputWrapper, { backgroundColor: colors.surfaceAlt }]}>
+        <View style={styles.inputWrapper}>
           <TextInput
             value={text}
             onChangeText={(value) => {
@@ -283,40 +284,36 @@ export function ChatComposer({
               onTyping?.(Boolean(value.trim()));
             }}
             onBlur={() => onTyping?.(false)}
-            placeholder={t('chat.placeholder')}
-            placeholderTextColor={colors.textMuted}
+            placeholder={placeholder ?? t('chat.placeholder')}
+            placeholderTextColor={v1Colors.textLo}
             editable={!disabled && !isSending}
             multiline
             maxLength={2050}
-            style={[
-              [styles.textInput, { color: colors.text }],
-              { fontFamily: inputTypography.body.fontFamily },
-            ]}
+            style={styles.textInput}
             accessibilityLabel="Chat message input"
             testID="input-chat-message"
           />
 
-          {/* Near character limit indicator */}
-          {isNearLimit && (
-            <Text
-              style={[
-                styles.charLimitText,
-                { color: isOverLimit ? colors.danger : colors.textMuted },
-              ]}
+          {isNearLimit ? (
+            <V1Text
+              variant="micro"
+              color={isOverLimit ? 'danger' : 'textLo'}
+              style={styles.charLimitText}
               testID="text-chat-char-limit"
             >
               {remainingChars}
-            </Text>
-          )}
+            </V1Text>
+          ) : null}
         </View>
 
-        {/* Send Button */}
         <Pressable
           onPress={handleSend}
           disabled={!canSend || isOverLimit}
           style={[
             styles.sendBtn,
-            { backgroundColor: canSend && !isOverLimit ? colors.accent : colors.surfaceAlt },
+            {
+              backgroundColor: canSend && !isOverLimit ? v1Colors.apricot : v1Colors.s2,
+            },
           ]}
           accessibilityRole="button"
           accessibilityLabel={t('chat.sendBtn')}
@@ -324,18 +321,16 @@ export function ChatComposer({
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           {isSending ? (
-            <ActivityIndicator size="small" color={colors.onAccent} />
+            <ActivityIndicator size="small" color={v1Colors.onBrand} />
           ) : (
-            <Ionicons
-              name="arrow-up"
+            <ArrowRightIcon
               size={18}
-              color={canSend && !isOverLimit ? colors.onAccent : colors.textMuted}
+              color={canSend && !isOverLimit ? v1Colors.onBrand : v1Colors.textLo}
             />
           )}
         </Pressable>
       </View>
 
-      {/* Media Picker Sheet Modal */}
       <ChatMediaPickerModal
         visible={showPickerModal}
         onClose={() => setShowPickerModal(false)}
@@ -351,26 +346,42 @@ export function ChatComposer({
 
 const styles = StyleSheet.create({
   composerContainer: {
-    paddingHorizontal: spacing.sm,
-    paddingTop: 4,
-    paddingBottom: 6,
+    paddingHorizontal: v1Space.lg,
+    paddingTop: v1Space.sm,
+    paddingBottom: v1Space.sm,
+    backgroundColor: v1Colors.bg0,
+    borderTopWidth: borders.width,
+    borderTopColor: v1Colors.hairline,
+    gap: v1Space.xs,
+  },
+  replyBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: v1Space.sm,
+    borderRadius: v1Radius.chip,
+    backgroundColor: v1Colors.s1,
+    borderWidth: borders.width,
+    borderColor: v1Colors.hairline,
+  },
+  replyTextCol: {
+    flex: 1,
+  },
+  cancelReplyBtn: {
+    minHeight: layout.touch,
+    minWidth: layout.touch,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   disabledNoticeWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.md,
-    marginBottom: spacing.xs,
+    paddingHorizontal: v1Space.md,
+    paddingVertical: v1Space.xs + 2,
+    borderRadius: v1Radius.chip,
+    backgroundColor: v1Colors.s1,
     gap: 6,
   },
-  disabledNoticeText: {
-    fontFamily: typography.body.fontFamily,
-    fontSize: fontSize.xs,
-    fontWeight: '500',
-  },
   previewsScroll: {
-    marginBottom: spacing.xs,
     maxHeight: 70,
   },
   previewsContent: {
@@ -397,71 +408,73 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    backgroundColor: v1Colors.bg0,
     alignItems: 'center',
     justifyContent: 'center',
   },
   addMoreCard: {
     width: 60,
     height: 60,
-    borderRadius: radius.md,
+    borderRadius: v1Radius.chip,
     borderWidth: 1,
     borderStyle: 'dashed',
+    borderColor: v1Colors.hairlineLit,
+    backgroundColor: v1Colors.s1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  addMoreText: {
-    fontFamily: typography.body.fontFamily,
-    fontSize: 10,
-    fontWeight: '600',
-    marginTop: 2,
   },
   inputBarRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: v1Space.sm,
   },
   iconBtn: {
-    width: 38,
-    height: 38,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radius.pill,
+    borderRadius: v1Radius.full,
+    backgroundColor: v1Colors.s2,
+    borderWidth: borders.width,
+    borderColor: v1Colors.hairline,
   },
   btnDisabled: {
-    opacity: 0.4,
+    opacity: 0.45,
   },
   inputWrapper: {
     flex: 1,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 3,
-    minHeight: 38,
+    borderRadius: v1Radius.full,
+    backgroundColor: v1Colors.s1,
+    borderWidth: borders.width,
+    borderColor: v1Colors.hairline,
+    paddingHorizontal: v1Space.lg,
+    paddingVertical: 6,
+    minHeight: 42,
     maxHeight: 110,
     flexDirection: 'row',
     alignItems: 'center',
   },
   textInput: {
     flex: 1,
-    fontFamily: typography.body.fontFamily,
+    fontFamily: fonts.regular,
     fontSize: fontSize.sm,
-    lineHeight: 18,
+    lineHeight: 20,
+    color: v1Colors.textHi,
     paddingTop: 2,
     paddingBottom: 2,
     minHeight: 22,
     textAlignVertical: 'center',
   },
   charLimitText: {
-    fontFamily: typography.body.fontFamily,
-    fontSize: 10,
-    fontWeight: '700',
     marginLeft: 4,
   },
   sendBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.pill,
+    width: 40,
+    height: 40,
+    borderRadius: v1Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
 });
+
+void typography;

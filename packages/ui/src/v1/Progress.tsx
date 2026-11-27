@@ -212,43 +212,60 @@ export function Ring({
 export interface AvatarRingProps {
   /** Member display name or initial */
   initial: string;
-  /** Completion ratio 0..1 */
+  /** Progress ratio 0..1 */
   progress: number;
-  /** Ring & circle color (defaults to apricot) */
+  /** Ring outer diameter (defaults to 48) */
+  size?: number;
+  /** Optional convenience flag: true uses apricot, false uses hairlineLit when color is omitted */
+  isSelf?: boolean;
+  /** Ring & circle color (defaults to apricot or hairlineLit based on isSelf) */
   color?: string;
   accessibilityLabel?: string;
   testID?: string;
   style?: StyleProp<ViewStyle>;
 }
 
-/** 48 pt ring around a 34 pt colored circle with the initial (13 / 800 onBrand). */
+/** 48 pt ring (customizable size) around a colored circle with the initial. */
 export function AvatarRing({
   initial,
   progress,
-  color = colors.apricot,
+  size = 48,
+  isSelf = true,
+  color,
   accessibilityLabel,
   testID,
   style,
 }: AvatarRingProps): React.JSX.Element {
   const cleanInitial = (initial.trim().slice(0, 1) || '?').toUpperCase();
+  const resolvedColor = color ?? (isSelf ? colors.apricot : colors.hairlineLit);
+  const innerSize = Math.round((size * 34) / 48);
 
   return (
     <Ring
       progress={progress}
-      size={48}
-      strokeWidth={4}
-      color={color}
+      size={size}
+      strokeWidth={Math.max(3, Math.round((size * 4) / 48))}
+      color={resolvedColor}
       trackColor={colors.s3}
       accessibilityLabel={accessibilityLabel ?? `${cleanInitial}, ${Math.round(progress * 100)}%`}
       testID={testID}
       style={style}
     >
-      <View style={[styles.avatarCircle, { backgroundColor: color }]}>
+      <View
+        style={[
+          styles.avatarCircle,
+          {
+            width: innerSize,
+            height: innerSize,
+            backgroundColor: resolvedColor,
+          },
+        ]}
+      >
         <Text
           style={{
             fontFamily: fonts.extrabold,
-            fontSize: 13,
-            lineHeight: 16,
+            fontSize: Math.max(11, Math.round((size * 13) / 48)),
+            lineHeight: Math.max(14, Math.round((size * 16) / 48)),
             color: colors.onBrand,
           }}
         >

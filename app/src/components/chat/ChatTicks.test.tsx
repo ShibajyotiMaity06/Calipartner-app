@@ -4,7 +4,7 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChatMessage } from '@/types/chat';
 import type { RoomSummary } from '@/types/rooms';
-import { dark } from '@calipartner/ui';
+import { colors as v1Colors } from '@calipartner/ui/v1';
 
 vi.mock('@/components/HeaderActions', () => ({ HeaderActions: 'HeaderActions' }));
 vi.mock('react-native', () => ({
@@ -106,17 +106,17 @@ describe('ChatMessageBubble WhatsApp double ticks', () => {
     });
     const singleTick = tree!.root.findByProps({ testID: 'tick-sent-msg-1' });
     expect(singleTick.props.name).toBe('checkmark');
-    expect(singleTick.props.color).toBe('#999999');
+    expect(singleTick.props.color).toBe(v1Colors.textLo);
     expect(tree!.root.findAllByProps({ testID: 'tick-seen-msg-1' })).toHaveLength(0);
   });
 
-  it('renders WhatsApp-style double blue ticks when seen by all in group', async () => {
+  it('renders apricot double ticks when seen by all in group', async () => {
     await act(async () => {
       tree = create(<ChatMessageBubble message={baseMessage} isMine={true} isSeenByAll={true} />);
     });
     const doubleTick = tree!.root.findByProps({ testID: 'tick-seen-msg-1' });
     expect(doubleTick.props.name).toBe('checkmark-done');
-    expect(doubleTick.props.color).toBe(dark.sky);
+    expect(doubleTick.props.color).toBe(v1Colors.apricot);
     expect(tree!.root.findAllByProps({ testID: 'tick-sent-msg-1' })).toHaveLength(0);
   });
 });
