@@ -286,12 +286,7 @@ export function SideBySideCard({
                     uri={item.avatarUrl ?? undefined}
                     identityHue={item.identityHue}
                   />
-                  <Text
-                    variant="bodyS"
-                    color={dark.textHi}
-                    style={styles.feedActionText}
-                    numberOfLines={1}
-                  >
+                  <Text variant="bodyS" color={dark.textHi} style={styles.feedActionText}>
                     {item.actionText}
                   </Text>
                   <Text variant="micro" color={dark.textLo}>

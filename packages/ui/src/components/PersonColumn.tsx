@@ -202,11 +202,7 @@ export function PersonColumn({
               >
                 {isLeft ? (
                   <>
-                    <Text
-                      variant="bodyS"
-                      color={isLogged ? dark.textHi : dark.textMid}
-                      numberOfLines={1}
-                    >
+                    <Text variant="bodyS" color={isLogged ? dark.textHi : dark.textMid}>
                       {label}
                     </Text>
                     {statusGlyph}
@@ -214,11 +210,7 @@ export function PersonColumn({
                 ) : (
                   <>
                     {statusGlyph}
-                    <Text
-                      variant="bodyS"
-                      color={isLogged ? dark.textHi : dark.textMid}
-                      numberOfLines={1}
-                    >
+                    <Text variant="bodyS" color={isLogged ? dark.textHi : dark.textMid}>
                       {label}
                     </Text>
                   </>

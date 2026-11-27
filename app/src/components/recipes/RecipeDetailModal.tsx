@@ -95,9 +95,7 @@ export function RecipeDetailModal({
               style={styles.circleBtn}
             />
 
-            <Text style={[styles.topBarTitle, { color: colors.text }]} numberOfLines={1}>
-              {recipe.title}
-            </Text>
+            <Text style={[styles.topBarTitle, { color: colors.text }]}>{recipe.title}</Text>
 
             {onToggleFavorite && (
               <Button

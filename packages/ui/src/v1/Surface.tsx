@@ -202,7 +202,7 @@ export function ToastBar({
       accessibilityRole="alert"
       testID={testID}
     >
-      <Text variant="body" color="textHi" style={styles.toastMessage} numberOfLines={2}>
+      <Text variant="body" color="textHi" style={styles.toastMessage}>
         {message}
       </Text>
       {actionLabel && onAction ? (
@@ -246,11 +246,11 @@ export function ListRow({
     <View style={styles.listRowInner}>
       {leading ? <View style={styles.rowLeading}>{leading}</View> : null}
       <View style={styles.rowBody}>
-        <Text variant="rowTitle" color="textHi" numberOfLines={1}>
+        <Text variant="rowTitle" color="textHi">
           {title}
         </Text>
         {meta ? (
-          <Text variant="meta" color="textLo" numberOfLines={2}>
+          <Text variant="meta" color="textLo">
             {meta}
           </Text>
         ) : null}
@@ -363,11 +363,11 @@ export function MealRow({
     <Card onPress={onPress} testID={testID} style={[styles.mealRowCard, style]}>
       <View style={styles.tile44}>{icon}</View>
       <View style={styles.rowBody}>
-        <Text variant="rowTitle" color="textHi" numberOfLines={1}>
+        <Text variant="rowTitle" color="textHi">
           {title}
         </Text>
         {meta ? (
-          <Text variant="meta" color="textLo" numberOfLines={1}>
+          <Text variant="meta" color="textLo">
             {meta}
           </Text>
         ) : null}
@@ -430,10 +430,10 @@ export function LeaderboardRow({
       </Text>
       <AvatarRing initial={name} progress={percentage / 100} color={ringColor} />
       <View style={styles.rowBody}>
-        <Text variant="rowTitle" color="textHi" style={{ fontSize: 15 }} numberOfLines={1}>
+        <Text variant="rowTitle" color="textHi" style={{ fontSize: 15 }}>
           {name}
         </Text>
-        <Text variant="micro" color="textLo" style={{ fontSize: 12 }} numberOfLines={1}>
+        <Text variant="micro" color="textLo" style={{ fontSize: 12 }}>
           {status}
         </Text>
       </View>
@@ -609,23 +609,13 @@ export function NotificationPreview({
                   {timeLabel}
                 </Text>
               </View>
-              <Text
-                variant="rowTitle"
-                color="textHi"
-                style={styles.notificationTitle}
-                numberOfLines={1}
-              >
+              <Text variant="rowTitle" color="textHi" style={styles.notificationTitle}>
                 {title}
               </Text>
             </>
           ) : (
             <View style={styles.notificationHeader}>
-              <Text
-                variant="rowTitle"
-                color="textHi"
-                style={styles.notificationTitle}
-                numberOfLines={1}
-              >
+              <Text variant="rowTitle" color="textHi" style={styles.notificationTitle}>
                 {title}
               </Text>
               <Text variant="micro" color="textLo">
@@ -633,7 +623,7 @@ export function NotificationPreview({
               </Text>
             </View>
           )}
-          <Text variant="body" color="textMid" numberOfLines={2}>
+          <Text variant="body" color="textMid">
             {body}
           </Text>
         </View>

@@ -393,7 +393,7 @@ export function PeopleSelector({
               ]}
               testID={`compare-choose-${side}`}
             >
-              <Text variant="bodyS" numberOfLines={1} style={memberDropdownStyles.label}>
+              <Text variant="bodyS" style={memberDropdownStyles.label}>
                 {memberName(member)}
               </Text>
               <Ionicons

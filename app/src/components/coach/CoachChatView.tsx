@@ -6,6 +6,7 @@ import {
   Text as V1Text,
   borders as v1Borders,
   colors as v1Colors,
+  elevation as v1Elevation,
   fonts as v1Fonts,
   radius as v1Radius,
   space as v1Space,
@@ -20,8 +21,10 @@ import {
   StyleSheet,
   TextInput,
   View,
+  type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '@/theme/useTheme';
 import { CoachStartV1 } from './CoachStartV1';
 import {
   acceptAiProcessingConsent,
@@ -57,8 +60,12 @@ const MAX_CHAR_COUNT = 1000;
 
 export function CoachChatView({ onBack, initialConversationId }: CoachChatViewProps) {
   const insets = useSafeAreaInsets();
+  const themeState = useTheme() as { reduceTransparency?: boolean } | undefined;
+  const isGlassMenu = !themeState?.reduceTransparency;
   const { currentGoalProfile } = useTargets();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [headerBottom, setHeaderBottom] = useState<number | null>(null);
+  const [inputHeight, setInputHeight] = useState(24);
   const {
     subscription: { currentTier, hasActiveAccess, isTrial, loading: subLoading },
     inputText,
@@ -140,6 +147,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
 
       sendingRef.current = true;
       setInputText('');
+      setInputHeight(24);
       setIsSending(true);
       setRequestError(null);
 
@@ -392,7 +400,13 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
       testID="screen-coach-chat"
     >
       {/* Compact Header (No star icon, minimal top padding) */}
-      <View style={[styles.header, { paddingTop: Math.max(v1Space.sm, insets.top + v1Space.xs) }]}>
+      <View
+        onLayout={(event) => {
+          const { y, height } = event.nativeEvent.layout;
+          setHeaderBottom(y + height);
+        }}
+        style={[styles.header, { paddingTop: Math.max(v1Space.sm, insets.top + v1Space.xs) }]}
+      >
         <View style={styles.headerLeft}>
           {onBack ? (
             <Pressable
@@ -406,10 +420,10 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
             </Pressable>
           ) : null}
           <View style={styles.titleWrap}>
-            <V1Text variant="rowTitle" color="textHi" numberOfLines={1}>
+            <V1Text variant="rowTitle" color="textHi">
               {t('coachV1.headerTitle')}
             </V1Text>
-            <V1Text variant="meta" color="textLo" numberOfLines={1}>
+            <V1Text variant="meta" color="textLo">
               {t('coachV1.headerSubtitle')}
             </V1Text>
           </View>
@@ -427,58 +441,6 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
           </Pressable>
         </View>
       </View>
-
-      {menuOpen ? (
-        <View style={styles.menuDropdown} testID="coach-header-menu">
-          <Pressable
-            onPress={() => {
-              setMenuOpen(false);
-              setShowHistoryModal(true);
-            }}
-            accessibilityRole="button"
-            style={({ pressed }) => [styles.menuItem, pressed ? styles.menuItemPressed : null]}
-            testID="btn-coach-history"
-          >
-            <V1Text variant="label" color="textHi">
-              {t('coachV1.menuHistory')}
-            </V1Text>
-          </Pressable>
-          <View style={styles.menuDivider} />
-          <Pressable
-            onPress={() => {
-              setMenuOpen(false);
-              setShowConsentModal(true);
-            }}
-            accessibilityRole="button"
-            style={({ pressed }) => [styles.menuItem, pressed ? styles.menuItemPressed : null]}
-            testID="btn-coach-privacy"
-          >
-            <V1Text variant="label" color="textHi">
-              {t('coachV1.menuPrivacy')}
-            </V1Text>
-          </Pressable>
-          {hasStartedChat ? (
-            <>
-              <View style={styles.menuDivider} />
-              <Pressable
-                onPress={() => {
-                  setMenuOpen(false);
-                  setMessages([]);
-                  setRequestError(null);
-                  setCurrentConversationId(generateClientUuid());
-                }}
-                accessibilityRole="button"
-                style={({ pressed }) => [styles.menuItem, pressed ? styles.menuItemPressed : null]}
-                testID="btn-coach-new-chat"
-              >
-                <V1Text variant="label" color="apricot">
-                  {t('coachV1.menuNewChat')}
-                </V1Text>
-              </Pressable>
-            </>
-          ) : null}
-        </View>
-      ) : null}
 
       {/* Status Banners (Offline or Daily Limit) */}
       {isOffline && <CoachOfflineBanner />}
@@ -555,13 +517,14 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
       <View
         style={[
           styles.composerWrap,
-          { paddingBottom: Math.max(v1Space.md, insets.bottom + v1Space.xs) },
+          { paddingBottom: Math.max(v1Space.sm, insets.bottom + v1Space.xs) },
         ]}
       >
         <View style={styles.composerPill}>
           <Pressable
             onPress={() => setShowFoodLogModal(true)}
             disabled={inputDisabled}
+            hitSlop={6}
             accessibilityRole="button"
             accessibilityLabel={t('homeV1.scanMeal')}
             style={({ pressed }) => [
@@ -571,12 +534,22 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
             ]}
             testID="btn-coach-camera"
           >
-            <CameraIcon size={18} color={v1Colors.textMid} />
+            <CameraIcon size={17} color={v1Colors.textMid} />
           </Pressable>
 
           <TextInput
             value={inputText}
-            onChangeText={setInputText}
+            onChangeText={(next) => {
+              setInputText(next);
+              if (!next) setInputHeight(24);
+            }}
+            onContentSizeChange={(event) => {
+              const nextHeight = Math.round(event.nativeEvent.contentSize.height);
+              if (Number.isFinite(nextHeight)) {
+                setInputHeight(Math.max(24, Math.min(92, nextHeight)));
+              }
+            }}
+            numberOfLines={!inputText && Platform.OS === 'web' ? 1 : undefined}
             placeholder={t('coachV1.inputPlaceholder')}
             placeholderTextColor={v1Colors.textLo}
             editable={!inputDisabled}
@@ -585,6 +558,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
             style={[
               styles.textInput,
               {
+                height: inputText ? inputHeight : 24,
                 opacity: inputDisabled ? 0.6 : 1,
                 fontFamily: v1Fonts.regular,
               },
@@ -595,6 +569,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
           <Pressable
             onPress={() => void handleSendMessage(inputText)}
             disabled={!canSend}
+            hitSlop={6}
             style={({ pressed }) => [
               styles.sendButton,
               canSend ? styles.sendButtonActive : styles.sendButtonIdle,
@@ -607,7 +582,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
             {isSending ? (
               <ActivityIndicator size="small" color={v1Colors.onBrand} />
             ) : (
-              <ArrowRightIcon size={18} color={canSend ? v1Colors.onBrand : v1Colors.textLo} />
+              <ArrowRightIcon size={17} color={canSend ? v1Colors.onBrand : v1Colors.textLo} />
             )}
           </Pressable>
         </View>
@@ -620,6 +595,79 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
           </View>
         ) : null}
       </View>
+
+      {/* Glass Overlay Menu (never pushes screen downward) */}
+      {menuOpen ? (
+        <View style={[StyleSheet.absoluteFill, styles.menuOverlay]} pointerEvents="box-none">
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setMenuOpen(false)}
+            accessibilityRole="button"
+            accessibilityLabel={t('coachV1.menuClose')}
+            testID="coach-header-menu-backdrop"
+          />
+          <View
+            style={[
+              styles.menuGlassCard,
+              isGlassMenu ? styles.menuGlassSurface : styles.menuOpaqueSurface,
+              { top: headerBottom ?? Math.max(v1Space.sm, insets.top + v1Space.xs) + 46 },
+            ]}
+            testID="coach-header-menu"
+          >
+            {isGlassMenu ? <View pointerEvents="none" style={styles.menuGlassHighlight} /> : null}
+            <Pressable
+              onPress={() => {
+                setMenuOpen(false);
+                setShowHistoryModal(true);
+              }}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.menuItem, pressed ? styles.menuItemPressed : null]}
+              testID="btn-coach-history"
+            >
+              <V1Text variant="label" color="textHi">
+                {t('coachV1.menuHistory')}
+              </V1Text>
+            </Pressable>
+            <View style={styles.menuDivider} />
+            <Pressable
+              onPress={() => {
+                setMenuOpen(false);
+                setShowConsentModal(true);
+              }}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.menuItem, pressed ? styles.menuItemPressed : null]}
+              testID="btn-coach-privacy"
+            >
+              <V1Text variant="label" color="textHi">
+                {t('coachV1.menuPrivacy')}
+              </V1Text>
+            </Pressable>
+            {hasStartedChat ? (
+              <>
+                <View style={styles.menuDivider} />
+                <Pressable
+                  onPress={() => {
+                    setMenuOpen(false);
+                    setMessages([]);
+                    setRequestError(null);
+                    setCurrentConversationId(generateClientUuid());
+                  }}
+                  accessibilityRole="button"
+                  style={({ pressed }) => [
+                    styles.menuItem,
+                    pressed ? styles.menuItemPressed : null,
+                  ]}
+                  testID="btn-coach-new-chat"
+                >
+                  <V1Text variant="label" color="apricot">
+                    {t('coachV1.menuNewChat')}
+                  </V1Text>
+                </Pressable>
+              </>
+            ) : null}
+          </View>
+        </View>
+      ) : null}
 
       {/* 4. Consent Modal */}
       <CoachConsentModal
@@ -723,21 +771,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: v1Space.xs,
   },
-  menuDropdown: {
-    marginHorizontal: v1Space.xl,
-    marginBottom: v1Space.sm,
-    backgroundColor: v1Colors.s1,
+  menuOverlay: {
+    zIndex: 100,
+  },
+  menuGlassCard: {
+    position: 'absolute',
+    right: v1Space.xl,
+    minWidth: 205,
     borderWidth: v1Borders.width,
     borderColor: v1Colors.hairlineLit,
     borderRadius: v1Radius.chip,
     overflow: 'hidden',
+    ...v1Elevation.floatingBar,
+  },
+  menuGlassSurface: {
+    backgroundColor: v1Colors.glass,
+    ...(Platform.OS === 'web'
+      ? ({
+          backdropFilter: 'blur(28px) saturate(190%) brightness(1.06)',
+          WebkitBackdropFilter: 'blur(28px) saturate(190%) brightness(1.06)',
+        } as unknown as ViewStyle)
+      : {}),
+  },
+  menuOpaqueSurface: {
+    backgroundColor: v1Colors.s2,
+  },
+  menuGlassHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: v1Space.md,
+    right: v1Space.md,
+    height: v1Borders.width,
+    backgroundColor: v1Colors.glassHighlight,
+    zIndex: 1,
   },
   menuItem: {
     paddingHorizontal: v1Space.lg,
     paddingVertical: v1Space.md,
   },
   menuItemPressed: {
-    backgroundColor: v1Colors.s2,
+    backgroundColor: v1Colors.s3,
   },
   menuDivider: {
     height: v1Borders.width,
@@ -781,13 +854,13 @@ const styles = StyleSheet.create({
     borderWidth: v1Borders.width,
     borderColor: v1Colors.hairline,
     borderRadius: v1Radius.full,
-    paddingHorizontal: v1Space.sm,
-    paddingVertical: v1Space.xs + 2,
-    minHeight: 52,
+    paddingHorizontal: v1Space.xs + 2,
+    paddingVertical: 4,
+    minHeight: 42,
   },
   cameraBtn: {
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 34,
     borderRadius: v1Radius.full,
     backgroundColor: v1Colors.s2,
     alignItems: 'center',
@@ -795,16 +868,19 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    minHeight: 36,
-    maxHeight: 110,
+    minHeight: 24,
+    maxHeight: 92,
     paddingHorizontal: v1Space.xs,
-    paddingVertical: Platform.OS === 'ios' ? 8 : 6,
+    paddingVertical: Platform.OS === 'ios' ? 2 : 0,
     fontSize: 15,
+    lineHeight: 20,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
     color: v1Colors.textHi,
   },
   sendButton: {
-    width: 40,
-    height: 40,
+    width: 34,
+    height: 34,
     borderRadius: v1Radius.full,
     alignItems: 'center',
     justifyContent: 'center',

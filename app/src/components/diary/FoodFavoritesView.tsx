@@ -151,10 +151,10 @@ function FoodFavoritesContent({
                       testID={`favorite-result-${food.id}`}
                       style={styles.foodCopy}
                     >
-                      <Text variant="rowTitle" color="textHi" numberOfLines={1}>
+                      <Text variant="rowTitle" color="textHi">
                         {food.name}
                       </Text>
-                      <Text variant="meta" color="textLo" numberOfLines={1}>
+                      <Text variant="meta" color="textLo">
                         {subMeta}
                       </Text>
                     </Pressable>

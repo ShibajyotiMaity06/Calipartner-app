@@ -411,11 +411,7 @@ export function FoodPhotoCameraModal({
                   style={[styles.modePillItem, scanMode === 'food' ? styles.modePillActive : null]}
                   testID="camera-mode-food"
                 >
-                  <Text
-                    variant="buttonS"
-                    color={scanMode === 'food' ? 'textHi' : 'textLo'}
-                    numberOfLines={1}
-                  >
+                  <Text variant="buttonS" color={scanMode === 'food' ? 'textHi' : 'textLo'}>
                     {t('captureV1.modeScanFood')}
                   </Text>
                 </Pressable>
@@ -426,7 +422,7 @@ export function FoodPhotoCameraModal({
                   style={styles.modePillItem}
                   testID="camera-mode-barcode"
                 >
-                  <Text variant="buttonS" color="textLo" numberOfLines={1}>
+                  <Text variant="buttonS" color="textLo">
                     {t('captureV1.modeBarcode')}
                   </Text>
                 </Pressable>
@@ -438,11 +434,7 @@ export function FoodPhotoCameraModal({
                   style={[styles.modePillItem, scanMode === 'label' ? styles.modePillActive : null]}
                   testID="camera-mode-label"
                 >
-                  <Text
-                    variant="buttonS"
-                    color={scanMode === 'label' ? 'textHi' : 'textLo'}
-                    numberOfLines={1}
-                  >
+                  <Text variant="buttonS" color={scanMode === 'label' ? 'textHi' : 'textLo'}>
                     {t('captureV1.modeLabel')}
                   </Text>
                 </Pressable>

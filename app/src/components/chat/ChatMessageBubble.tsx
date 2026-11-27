@@ -123,11 +123,11 @@ export function ChatMessageBubble({
               <DumbbellIcon size={16} color={v1Colors.textMid} />
             </View>
             <View style={styles.activityCardBody}>
-              <V1Text variant="label" color="textHi" style={styles.boldText} numberOfLines={2}>
+              <V1Text variant="label" color="textHi" style={styles.boldText}>
                 {workoutCard.title}
               </V1Text>
               {workoutCard.subtitle ? (
-                <V1Text variant="meta" color="textLo" numberOfLines={1}>
+                <V1Text variant="meta" color="textLo">
                   {workoutCard.subtitle}
                 </V1Text>
               ) : null}
@@ -217,7 +217,7 @@ export function ChatMessageBubble({
         ]}
       >
         {!isMine ? (
-          <V1Text variant="meta" color="textLo" style={styles.senderMetaLine} numberOfLines={1}>
+          <V1Text variant="meta" color="textLo" style={styles.senderMetaLine}>
             {`${senderName}${timeFormatted ? ` · ${timeFormatted}` : ''}`}
           </V1Text>
         ) : null}
@@ -259,7 +259,7 @@ export function ChatMessageBubble({
                 {message.reply ? message.reply.name : t('aha.replyUnavailable')}
               </V1Text>
               {message.reply ? (
-                <V1Text variant="meta" color={isMine ? 'onBrand' : 'textHi'} numberOfLines={3}>
+                <V1Text variant="meta" color={isMine ? 'onBrand' : 'textHi'}>
                   {message.reply.text || t('aha.attachment')}
                 </V1Text>
               ) : null}

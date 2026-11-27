@@ -126,9 +126,7 @@ export function LogRecipeModal({
               <Text style={[styles.title, { color: colors.text }]}>
                 {t('recipes.logSheet.title')}
               </Text>
-              <Text style={[styles.subtitle, { color: colors.textMuted }]} numberOfLines={1}>
-                {recipe.title}
-              </Text>
+              <Text style={[styles.subtitle, { color: colors.textMuted }]}>{recipe.title}</Text>
               {recipe.source_portion && (
                 <Text style={{ color: colors.textMuted }}>
                   {t('homeRefresh.sourcePortion', { portion: recipe.source_portion })}

@@ -286,18 +286,10 @@ export function RepeatYesterdayMeals({
                         testID={`repeat-checkbox-${section}`}
                       />
                       <View style={styles.v1MealBody}>
-                        <V1Text
-                          variant="rowTitle"
-                          color={canSelect ? 'textHi' : 'textOff'}
-                          numberOfLines={1}
-                        >
+                        <V1Text variant="rowTitle" color={canSelect ? 'textHi' : 'textOff'}>
                           {t(`diary.sections.${section}`)}
                         </V1Text>
-                        <V1Text
-                          variant="meta"
-                          color={canSelect ? 'textLo' : 'textOff'}
-                          numberOfLines={1}
-                        >
+                        <V1Text variant="meta" color={canSelect ? 'textLo' : 'textOff'}>
                           {alreadyToday
                             ? t('repeatV1.alreadyLoggedToday')
                             : hasYesterday

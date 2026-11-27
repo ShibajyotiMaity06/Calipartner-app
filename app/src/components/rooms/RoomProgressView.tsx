@@ -447,7 +447,6 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
                     styles.tableDataColHeader,
                     { color: memberColorMap.get(s.user_id) ?? colors.accent, flex: 1 },
                   ]}
-                  numberOfLines={1}
                 >
                   {s.nickname}
                 </Text>

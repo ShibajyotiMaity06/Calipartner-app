@@ -895,10 +895,7 @@ export function WorkoutLoggerModal({
 
                         {/* PREVIOUS Text */}
                         <View style={styles.colPrev}>
-                          <Text
-                            numberOfLines={1}
-                            style={[styles.prevText, { color: colors.textMuted }]}
-                          >
+                          <Text style={[styles.prevText, { color: colors.textMuted }]}>
                             {prevText}
                           </Text>
                         </View>

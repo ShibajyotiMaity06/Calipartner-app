@@ -151,6 +151,7 @@ export function Ring({
   const track = trackColor ?? (size <= 56 ? colors.s3 : colors.s2);
 
   const anim = useRef(new Animated.Value(target)).current;
+  const prevTargetRef = useRef(target);
   const [rendered, setRendered] = useState(target);
 
   useEffect(() => {
@@ -161,6 +162,10 @@ export function Ring({
   }, [anim]);
 
   useEffect(() => {
+    if (prevTargetRef.current === target) {
+      return;
+    }
+    prevTargetRef.current = target;
     if (reduceMotion) {
       anim.setValue(target);
       setRendered(target);

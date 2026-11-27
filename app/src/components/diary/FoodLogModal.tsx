@@ -690,10 +690,10 @@ export function FoodLogModal({
                             onPress={() => handleSelectFood(f)}
                             style={styles.foodRowCopy}
                           >
-                            <Text variant="rowTitle" color="textHi" numberOfLines={1}>
+                            <Text variant="rowTitle" color="textHi">
                               {f.name}
                             </Text>
-                            <Text variant="meta" color="textLo" numberOfLines={1}>
+                            <Text variant="meta" color="textLo">
                               {subMeta}
                             </Text>
                           </Pressable>
@@ -779,10 +779,10 @@ export function FoodLogModal({
                               style={styles.foodRowCopy}
                               onPress={() => handleSelectFood(item.food)}
                             >
-                              <Text variant="rowTitle" color="textHi" numberOfLines={1}>
+                              <Text variant="rowTitle" color="textHi">
                                 {item.food.name}
                               </Text>
-                              <Text variant="meta" color="textLo" numberOfLines={1}>
+                              <Text variant="meta" color="textLo">
                                 {t('homeRefresh.recentQuantity', {
                                   quantity: item.stats.last_quantity,
                                   unit: item.stats.last_unit,
@@ -923,7 +923,7 @@ export function FoodLogModal({
                   <Text variant="rowTitle" color="textHi" tabular>
                     {t('captureV1.addedCount', { count: selection.length })}
                   </Text>
-                  <Text variant="meta" color="textLo" tabular numberOfLines={1}>
+                  <Text variant="meta" color="textLo" tabular>
                     {` · ${t('captureV1.summaryTotal', {
                       calories: Math.round(selectionTotals.calories).toLocaleString('en-US'),
                       section: targetSectionLabel,

@@ -381,7 +381,7 @@ export function ChatView({
             testID="btn-pinned-squad-goal"
           >
             <PinIcon size={14} color={v1Colors.apricot} />
-            <V1Text variant="meta" color="textMid" numberOfLines={1} style={styles.pinnedText}>
+            <V1Text variant="meta" color="textMid" style={styles.pinnedText}>
               {pinnedGoal ? `${t('squadV1.pinnedPrefix')} ` : ''}
               <V1Text
                 variant="meta"

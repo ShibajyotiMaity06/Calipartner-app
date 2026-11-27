@@ -6,7 +6,6 @@ import {
   ChartBarIcon,
   ChevronRightIcon,
   DumbbellIcon,
-  Ring,
   ScaleIcon,
   Text,
   UtensilsIcon,
@@ -195,17 +194,6 @@ export function CoachStartV1({
       testID="coach-start-v1"
     >
       <View style={styles.heroBlock}>
-        <View style={styles.haloOuter}>
-          <View style={styles.haloGlow} />
-          <Ring
-            progress={0.72}
-            size={56}
-            strokeWidth={5}
-            color={colors.apricot}
-            trackColor={colors.hairline}
-          />
-        </View>
-
         <Text style={styles.headline}>
           <Text style={styles.headlineBase}>
             {t('coachV1.startHeadlineLead', { name: firstName })}
@@ -222,7 +210,7 @@ export function CoachStartV1({
       <View style={styles.contextRow}>
         {contextChips.map((chip) => (
           <View key={chip.id} style={styles.contextPill} testID={`coach-ctx-${chip.id}`}>
-            <Text variant="micro" color="textMid" numberOfLines={2} style={styles.contextText}>
+            <Text variant="micro" color="textMid" style={styles.contextText}>
               {chip.label}
             </Text>
           </View>
@@ -240,10 +228,10 @@ export function CoachStartV1({
           >
             <View style={styles.starterTile}>{item.icon}</View>
             <View style={styles.starterBody}>
-              <Text variant="rowTitle" color="textHi" numberOfLines={1}>
+              <Text variant="rowTitle" color="textHi">
                 {item.title}
               </Text>
-              <Text variant="meta" color="textLo" numberOfLines={1}>
+              <Text variant="meta" color="textLo">
                 {item.subtitle}
               </Text>
             </View>
@@ -257,8 +245,10 @@ export function CoachStartV1({
 
 const styles = StyleSheet.create({
   scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
     paddingHorizontal: space.xl,
-    paddingTop: space.sm,
+    paddingTop: space.xs,
     paddingBottom: space.lg,
     gap: space.md,
   },
@@ -266,20 +256,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space.sm,
     paddingTop: space.xs,
-  },
-  haloOuter: {
-    width: 68,
-    height: 68,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: space.xs,
-  },
-  haloGlow: {
-    position: 'absolute',
-    width: 68,
-    height: 68,
-    borderRadius: radius.full,
-    backgroundColor: colors.apricotGlowSoft,
   },
   headline: {
     textAlign: 'center',

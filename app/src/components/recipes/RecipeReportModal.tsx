@@ -108,9 +108,7 @@ export function RecipeReportModal({
               <Text style={[styles.title, { color: colors.text }]}>
                 {t('recipes.report.title')}
               </Text>
-              <Text style={[styles.subtitle, { color: colors.textMuted }]} numberOfLines={1}>
-                {recipe.title}
-              </Text>
+              <Text style={[styles.subtitle, { color: colors.textMuted }]}>{recipe.title}</Text>
             </View>
             <Button
               variant="tertiary"

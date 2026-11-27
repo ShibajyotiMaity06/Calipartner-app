@@ -183,10 +183,10 @@ export function MyMealsView({
           <View key={meal.id} style={styles.mealCard}>
             <View style={styles.mealHeader}>
               <View style={styles.mealCopy}>
-                <Text variant="rowTitle" color="textHi" numberOfLines={1}>
+                <Text variant="rowTitle" color="textHi">
                   {meal.name}
                 </Text>
-                <Text variant="meta" color="textLo" numberOfLines={2}>
+                <Text variant="meta" color="textLo">
                   {meal.items.map((item) => item.food_name).join(', ')}
                 </Text>
               </View>

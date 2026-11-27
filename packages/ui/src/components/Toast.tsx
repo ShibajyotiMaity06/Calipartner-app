@@ -48,7 +48,7 @@ export function Toast({
       testID={testID}
     >
       <View style={styles.toast}>
-        <Text variant="bodyS" color={dark.textHi} style={styles.message} numberOfLines={2}>
+        <Text variant="bodyS" color={dark.textHi} style={styles.message}>
           {message}
         </Text>
 

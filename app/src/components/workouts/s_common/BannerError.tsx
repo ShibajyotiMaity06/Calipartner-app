@@ -13,9 +13,7 @@ export function BannerError({ message, onRetry, testID = 'banner-error' }: Banne
   return (
     <View style={styles.banner} testID={testID}>
       <Ionicons name="alert-circle-outline" size={20} color={workoutTokens.danger} />
-      <Text style={styles.message} numberOfLines={2}>
-        {message}
-      </Text>
+      <Text style={styles.message}>{message}</Text>
       {onRetry ? (
         <Pressable
           testID={`${testID}-retry`}

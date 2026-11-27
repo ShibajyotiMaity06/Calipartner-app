@@ -121,10 +121,10 @@ export function RoomHeader({
         <AvatarCluster size={24} />
 
         <View style={localStyles.chatTitleCol}>
-          <V1Text variant="titleS" color="textHi" numberOfLines={1} style={localStyles.boldText}>
+          <V1Text variant="titleS" color="textHi" style={localStyles.boldText}>
             {currentRoom?.name ?? t('tabs.room')}
           </V1Text>
-          <V1Text variant="meta" color="textLo" numberOfLines={1}>
+          <V1Text variant="meta" color="textLo">
             {subLine}
           </V1Text>
         </View>
@@ -164,7 +164,7 @@ export function RoomHeader({
             style={localStyles.stickyTitleBtn}
             testID="btn-room-title-switcher"
           >
-            <V1Text variant="titleM" color="textHi" numberOfLines={1}>
+            <V1Text variant="titleM" color="textHi">
               {currentRoom.name}
             </V1Text>
           </Pressable>
@@ -194,12 +194,7 @@ export function RoomHeader({
                   ]}
                   testID="btn-room-title-switcher"
                 >
-                  <V1Text
-                    variant="titleM"
-                    color="textHi"
-                    numberOfLines={1}
-                    style={localStyles.flexShrink}
-                  >
+                  <V1Text variant="titleM" color="textHi" style={localStyles.flexShrink}>
                     {currentRoom?.name ?? t('tabs.room')}
                   </V1Text>
                   <ChevronDownIcon size={18} color={colors.textMid} />
@@ -211,12 +206,7 @@ export function RoomHeader({
 
               {currentRoom ? (
                 <View style={localStyles.subMetaRow}>
-                  <V1Text
-                    variant="meta"
-                    color="textLo"
-                    numberOfLines={1}
-                    style={localStyles.flexShrink}
-                  >
+                  <V1Text variant="meta" color="textLo" style={localStyles.flexShrink}>
                     {t('squadV1.membersCount', { count: currentRoom.member_count })} · {sponsorText}
                   </V1Text>
                   <Pressable

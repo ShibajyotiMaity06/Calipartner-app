@@ -360,11 +360,11 @@ export function OptionTile({
           <Checkbox checked={selected} round />
         </View>
         <View style={styles.tileTextWrap}>
-          <Text variant="rowTitle" color="textHi" numberOfLines={2} style={styles.tileTitle}>
+          <Text variant="rowTitle" color="textHi" style={styles.tileTitle}>
             {title}
           </Text>
           {meta ? (
-            <Text variant="meta" color="textLo" numberOfLines={1}>
+            <Text variant="meta" color="textLo">
               {meta}
             </Text>
           ) : null}

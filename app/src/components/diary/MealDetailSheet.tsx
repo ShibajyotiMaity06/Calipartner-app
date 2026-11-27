@@ -96,7 +96,7 @@ export function MealDetailSheet({
                 style={({ pressed }) => [styles.entryRow, pressed && styles.entryRowPressed]}
               >
                 <View style={{ flex: 1, gap: space[1] }}>
-                  <Text variant="body" color={dark.textHi} numberOfLines={1}>
+                  <Text variant="body" color={dark.textHi}>
                     {entry.food_name}
                   </Text>
                   <View>

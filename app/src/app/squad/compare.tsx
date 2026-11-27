@@ -49,10 +49,16 @@ const SCROLLED_BAR_Y = 140;
 export default function CompareScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ room?: string; left?: string; right?: string }>();
-  const roomId = typeof params.room === 'string' ? params.room : null;
-  const leftId = typeof params.left === 'string' ? params.left : null;
-  const rightId = typeof params.right === 'string' ? params.right : null;
+  const params = useLocalSearchParams<{
+    room?: string | string[];
+    left?: string | string[];
+    right?: string | string[];
+  }>();
+  const readParam = (value?: string | string[]) =>
+    typeof value === 'string' ? value : Array.isArray(value) ? (value[0] ?? null) : null;
+  const roomId = readParam(params.room);
+  const leftId = readParam(params.left);
+  const rightId = readParam(params.right);
 
   const [visible, setVisible] = useState(false);
   useFocusEffect(
@@ -102,9 +108,15 @@ export default function CompareScreen() {
     setRange(next);
   };
 
-  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setScrolledPastHero(event.nativeEvent.contentOffset.y > SCROLLED_BAR_Y);
-  };
+  const onScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const y = contentOffset.y;
+    const scrollableDistance = contentSize.height - layoutMeasurement.height;
+    setScrolledPastHero((prev) => {
+      if (prev) return y > 80;
+      return y > SCROLLED_BAR_Y && scrollableDistance > 220;
+    });
+  }, []);
 
   const data = compare.data;
 

@@ -57,12 +57,6 @@ export function CoachMessageBubble({
       ]}
       testID={`msg-bubble-${message.id}`}
     >
-      {!demo && !isUser && (
-        <View style={styles.avatar} testID={`avatar-coach-${message.id}`}>
-          <BrandRingMark size={16} color={colors.apricot} />
-        </View>
-      )}
-
       <View
         style={[
           styles.bubbleContentWrap,
@@ -80,7 +74,7 @@ export function CoachMessageBubble({
                   <BrandRingMark size={14} color={colors.textMid} />
                 </View>
                 <View style={styles.attachedMealInfo}>
-                  <Text variant="label" color="textHi" numberOfLines={1} tabular>
+                  <Text variant="label" color="textHi" tabular>
                     {`${message.attachedMeal.title} · ${Math.round(message.attachedMeal.calories)} kcal`}
                   </Text>
                   <Text variant="micro" color="textLo" tabular>
@@ -168,11 +162,7 @@ export function CoachMessageBubble({
                         ]}
                         testID={`coach-card-action-${message.id}-${idx}`}
                       >
-                        <Text
-                          variant="buttonS"
-                          color={action.primary ? 'onBrand' : 'textHi'}
-                          numberOfLines={1}
-                        >
+                        <Text variant="buttonS" color={action.primary ? 'onBrand' : 'textHi'}>
                           {action.label}
                         </Text>
                       </Pressable>
@@ -284,17 +274,6 @@ const styles = StyleSheet.create({
   coachRowWrap: {
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
-  },
-  avatar: {
-    width: 28,
-    height: 28,
-    borderRadius: radius.full,
-    backgroundColor: colors.s2,
-    borderWidth: borders.width,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
   },
   bubbleContentWrap: {
     flexShrink: 1,

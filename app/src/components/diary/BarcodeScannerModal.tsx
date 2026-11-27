@@ -460,7 +460,7 @@ export function BarcodeScannerModal({
                 style={styles.modePillItem}
                 testID="barcode-mode-photo"
               >
-                <Text variant="buttonS" color="textLo" numberOfLines={1}>
+                <Text variant="buttonS" color="textLo">
                   {t('captureV1.modeScanFood')}
                 </Text>
               </Pressable>
@@ -471,7 +471,7 @@ export function BarcodeScannerModal({
                 style={[styles.modePillItem, styles.modePillActive]}
                 testID="barcode-mode-barcode"
               >
-                <Text variant="buttonS" color="textHi" numberOfLines={1}>
+                <Text variant="buttonS" color="textHi">
                   {t('captureV1.modeBarcode')}
                 </Text>
               </Pressable>
@@ -482,7 +482,7 @@ export function BarcodeScannerModal({
                 style={styles.modePillItem}
                 testID="barcode-mode-label"
               >
-                <Text variant="buttonS" color="textLo" numberOfLines={1}>
+                <Text variant="buttonS" color="textLo">
                   {t('captureV1.modeLabel')}
                 </Text>
               </Pressable>
@@ -511,10 +511,10 @@ export function BarcodeScannerModal({
                     <CubeIcon size={20} color={colors.apricot} />
                   </View>
                   <View style={styles.productCopy}>
-                    <Text variant="rowTitle" color="textHi" numberOfLines={2}>
+                    <Text variant="rowTitle" color="textHi">
                       {foundFood.name}
                     </Text>
-                    <Text variant="meta" color="textLo" numberOfLines={1}>
+                    <Text variant="meta" color="textLo">
                       {servingSubtext}
                     </Text>
                   </View>

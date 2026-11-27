@@ -197,13 +197,12 @@ export function OnboardingQuestion({
                 <V1Text
                   variant="rowTitle"
                   color="textHi"
-                  numberOfLines={1}
                   style={v1Styles.previewName}
                   testID="nickname-preview-name"
                 >
                   {displayName}
                 </V1Text>
-                <V1Text variant="meta" color="textLo" numberOfLines={1}>
+                <V1Text variant="meta" color="textLo">
                   {t('onboardingV1.previewActivity')}
                 </V1Text>
               </View>

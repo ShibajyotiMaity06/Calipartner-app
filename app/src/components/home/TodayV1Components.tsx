@@ -146,7 +146,6 @@ export function TodayHeaderV1({
         <Text
           variant="titleM"
           color="textHi"
-          numberOfLines={1}
           style={styles.greetingText}
           testID="today-greeting-title"
         >
@@ -532,7 +531,7 @@ export function TodaySquadCardV1({
     <Card variant="hero" style={styles.squadCard} testID="today-squad-card">
       <View style={styles.squadTopRow}>
         <View style={styles.squadTitleGroup}>
-          <Text variant="rowTitle" color="textHi" numberOfLines={1} style={styles.squadName}>
+          <Text variant="rowTitle" color="textHi" style={styles.squadName}>
             {room.name}
           </Text>
           <Text variant="meta" color="textLo" tabular>
@@ -650,7 +649,7 @@ export function TodaySquadCardV1({
                 {(latestMention.nickname.slice(0, 1) || '?').toUpperCase()}
               </Text>
             </View>
-            <Text variant="meta" color="textMid" numberOfLines={1} style={styles.flexOne}>
+            <Text variant="meta" color="textMid" style={styles.flexOne}>
               {`${latestMention.nickname} ${latestMention.text}`}
             </Text>
             <Text variant="micro" color="textLo">
@@ -658,7 +657,7 @@ export function TodaySquadCardV1({
             </Text>
           </>
         ) : (
-          <Text variant="meta" color="textLo" numberOfLines={1}>
+          <Text variant="meta" color="textLo">
             {t('homeV1.squadHintFallback')}
           </Text>
         )}
@@ -799,10 +798,10 @@ export function TodayMealRowV1({
     >
       <View style={styles.mealTile44}>{mealIcon(section)}</View>
       <View style={styles.mealBody}>
-        <Text variant="rowTitle" color="textHi" numberOfLines={1}>
+        <Text variant="rowTitle" color="textHi">
           {sectionLabel}
         </Text>
-        <Text variant="meta" color="textLo" numberOfLines={2}>
+        <Text variant="meta" color="textLo">
           {summaryNames}
         </Text>
       </View>
@@ -896,7 +895,7 @@ export function TodayFastingCardV1(): React.JSX.Element | null {
           trackColor={colors.s3}
         />
         <View style={styles.flexOne}>
-          <Text variant="rowTitle" color="textHi" tabular numberOfLines={1}>
+          <Text variant="rowTitle" color="textHi" tabular>
             {isFasting
               ? t('homeV1.fastingElapsedInline', {
                   hours: elapsedHours,
@@ -904,7 +903,7 @@ export function TodayFastingCardV1(): React.JSX.Element | null {
                 })
               : t('homeV1.fastingReadyInline')}
           </Text>
-          <Text variant="meta" color="textLo" numberOfLines={1}>
+          <Text variant="meta" color="textLo">
             {subtitle}
           </Text>
         </View>
@@ -1042,7 +1041,7 @@ export function TodayWorkoutCardV1({
           <Text variant="micro" color="textLo" style={styles.workoutEyebrow}>
             {t('homeV1.todaysWorkout')}
           </Text>
-          <Text variant="rowTitle" color="textHi" numberOfLines={1}>
+          <Text variant="rowTitle" color="textHi">
             {day?.title ?? t('homeRefresh.scheduledRoutine')}
           </Text>
           {day ? (
@@ -1509,10 +1508,10 @@ export function TodayCoachCardV1({ isPro, onPress }: TodayCoachCardV1Props): Rea
       </View>
 
       <View style={styles.flexOne}>
-        <Text variant="rowTitle" color="textHi" numberOfLines={1}>
+        <Text variant="rowTitle" color="textHi">
           {t('homeV1.askCoachTitle')}
         </Text>
-        <Text variant="meta" color="textLo" numberOfLines={1}>
+        <Text variant="meta" color="textLo">
           {t('homeV1.askCoachSubtitle')}
         </Text>
       </View>

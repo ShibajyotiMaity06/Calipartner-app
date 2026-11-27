@@ -24,6 +24,7 @@ export const colors = {
   glass: 'rgba(26,21,17,0.85)',
   glassMin: 'rgba(26,21,17,0.78)',
   glassMax: 'rgba(26,21,17,0.88)',
+  glassHighlight: 'rgba(255,255,255,0.24)',
   apricotGlow: 'rgba(244,182,125,0.16)',
   apricotGlowLow: 'rgba(244,182,125,0.12)',
   apricotGlowHigh: 'rgba(244,182,125,0.28)',

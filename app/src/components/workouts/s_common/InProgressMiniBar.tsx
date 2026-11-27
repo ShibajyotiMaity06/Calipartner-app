@@ -37,9 +37,7 @@ export function InProgressMiniBar({
       <View style={styles.leftCol}>
         <View style={styles.titleRow}>
           <View style={styles.liveDot} />
-          <Text style={styles.workoutName} numberOfLines={1}>
-            {workoutName}
-          </Text>
+          <Text style={styles.workoutName}>{workoutName}</Text>
         </View>
         <Text style={styles.statsText}>
           {formatTime(elapsedSeconds)} · {completedSets} of {totalSets} sets

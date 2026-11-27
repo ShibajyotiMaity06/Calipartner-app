@@ -72,7 +72,7 @@ export function SquadChatCardV1({
         <Text variant="label" color="textHi" style={styles.boldLabel}>
           {t('squadV1.chatTitle')}
         </Text>
-        <Text variant="meta" color="textLo" numberOfLines={1}>
+        <Text variant="meta" color="textLo">
           {previewText}
         </Text>
       </View>
@@ -156,7 +156,7 @@ export function SquadLeaderboardV1({
 
               <View style={styles.leaderInfo}>
                 <View style={styles.leaderNameRow}>
-                  <Text variant="label" color="textHi" numberOfLines={1} style={styles.boldLabel}>
+                  <Text variant="label" color="textHi" style={styles.boldLabel}>
                     {name}
                   </Text>
                   {member.is_self ? (
@@ -167,13 +167,13 @@ export function SquadLeaderboardV1({
                 </View>
 
                 {subtitle ? (
-                  <Text variant="meta" color="textLo" numberOfLines={1}>
+                  <Text variant="meta" color="textLo">
                     {subtitle}
                   </Text>
                 ) : (
                   <View style={styles.lockSubRow}>
                     <LockIcon size={11} color={colors.textLo} />
-                    <Text variant="meta" color="textLo" numberOfLines={1}>
+                    <Text variant="meta" color="textLo">
                       {t('squadV1.sharesPctOnly')}
                     </Text>
                   </View>
@@ -239,7 +239,7 @@ export function SquadCompareCardV1({
               progress={(left.score ?? 50) / 100}
               isSelf
             />
-            <Text variant="label" color="textHi" numberOfLines={1} style={styles.boldLabel}>
+            <Text variant="label" color="textHi" style={styles.boldLabel}>
               {leftName}
             </Text>
           </Pressable>
@@ -265,7 +265,7 @@ export function SquadCompareCardV1({
             ]}
             testID="compare-choose-right"
           >
-            <Text variant="label" color="textHi" numberOfLines={1} style={styles.boldLabel}>
+            <Text variant="label" color="textHi" style={styles.boldLabel}>
               {rightName}
             </Text>
             <AvatarRing
@@ -369,7 +369,7 @@ export function SquadActivitySectionV1({
                 testID={`squad-activity-${item.id}`}
               >
                 <View style={styles.activityIconTile}>{iconNode}</View>
-                <Text variant="body" color="textMid" style={styles.activityText} numberOfLines={2}>
+                <Text variant="body" color="textMid" style={styles.activityText}>
                   <Text variant="label" color="textHi" style={styles.boldLabel}>
                     {namePrefix}
                   </Text>
@@ -724,7 +724,7 @@ export function SquadSwitcherSheetV1({
                   <Text variant="label" color="textHi" style={styles.boldLabel}>
                     {item.name}
                   </Text>
-                  <Text variant="meta" color="textLo" numberOfLines={1}>
+                  <Text variant="meta" color="textLo">
                     {t('squadV1.membersCount', { count: item.member_count })} · {sponsor}
                   </Text>
                 </View>

@@ -83,14 +83,8 @@ export function Header({
 
         {!largeTitle && (
           <View style={styles.centerSlot}>
-            <Text numberOfLines={1} style={styles.standardTitle}>
-              {title}
-            </Text>
-            {subtitle ? (
-              <Text numberOfLines={1} style={styles.standardSubtitle}>
-                {subtitle}
-              </Text>
-            ) : null}
+            <Text style={styles.standardTitle}>{title}</Text>
+            {subtitle ? <Text style={styles.standardSubtitle}>{subtitle}</Text> : null}
           </View>
         )}
 

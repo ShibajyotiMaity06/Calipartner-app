@@ -44,11 +44,11 @@ export function ListRow({
       {leading ? <View style={styles.leading}>{leading}</View> : null}
 
       <View style={styles.center}>
-        <Text variant="heading" color={dark.textHi} numberOfLines={1}>
+        <Text variant="heading" color={dark.textHi}>
           {title}
         </Text>
         {subtitle ? (
-          <Text variant="bodyS" color={dark.textMid} numberOfLines={1} style={styles.subtitle}>
+          <Text variant="bodyS" color={dark.textMid} style={styles.subtitle}>
             {subtitle}
           </Text>
         ) : null}

@@ -76,6 +76,7 @@ export default function RoomScreen() {
     room?: string;
     action?: string;
     tab?: string;
+    chat?: string;
     mention?: string;
     returnTo?: string;
   }>();
@@ -122,8 +123,11 @@ export default function RoomScreen() {
   };
 
   useEffect(() => {
-    router.setParams({ chat: visible && segment === 'chat' ? 'open' : undefined });
-  }, [router, visible, segment]);
+    const nextChat = visible && segment === 'chat' ? 'open' : undefined;
+    if (params.chat !== nextChat) {
+      router.setParams({ chat: nextChat });
+    }
+  }, [router, visible, segment, params.chat]);
 
   const selectSegment = (next: RoomSegment) => {
     if (next === segment) return;
@@ -190,10 +194,14 @@ export default function RoomScreen() {
   const waiting = room?.state === 'dormant' || (room ? room.member_count < 2 : false);
   const locked = room?.state === 'locked';
   const canChat = Boolean(roomId && room?.state === 'active' && !waiting && !locked);
-  const preview = useRoomChat(roomId, visible && canChat && segment !== 'chat', {
-    userId: user?.id,
-    markRead: false,
-  });
+  const chatPreviewOptions = useMemo(
+    () => ({
+      userId: user?.id,
+      markRead: false,
+    }),
+    [user?.id],
+  );
+  const preview = useRoomChat(roomId, visible && canChat && segment !== 'chat', chatPreviewOptions);
 
   const refresh = useCallback(async () => {
     await Promise.all([
@@ -212,7 +220,25 @@ export default function RoomScreen() {
     return () => clearInterval(timer);
   }, [waiting, refresh]);
 
-  const members = squad.data?.members ?? [];
+  const rawMembers = squad.data?.members;
+  const members = useMemo(() => rawMembers ?? [], [rawMembers]);
+  const chatViewOptions = useMemo(
+    () => ({
+      userId: user?.id,
+      userNickname: profile?.nickname,
+      username: profile?.username,
+    }),
+    [user?.id, profile?.nickname, profile?.username],
+  );
+  const chatMentionMembers = useMemo(
+    () =>
+      members.map((member) => ({
+        user_id: member.user_id,
+        username: member.username,
+        nickname: member.nickname,
+      })),
+    [members],
+  );
   const left =
     members.find((member) => member.user_id === leftId) ??
     members.find((member) => member.is_self) ??
@@ -245,10 +271,15 @@ export default function RoomScreen() {
     );
   };
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const y = event.nativeEvent.contentOffset.y;
-    setScrolledHeader(y > STICKY_HEADER_SCROLL_Y);
-  };
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const y = contentOffset.y;
+    const scrollableDistance = contentSize.height - layoutMeasurement.height;
+    setScrolledHeader((prev) => {
+      if (prev) return y > 16;
+      return y > STICKY_HEADER_SCROLL_Y && scrollableDistance > 220;
+    });
+  }, []);
 
   const bottomSpacer = getTabBarHeight(fontScale) + insets.bottom + v1Space.lg;
 
@@ -301,24 +332,16 @@ export default function RoomScreen() {
               onPrefillConsumed={() => setChatPrefill(null)}
               onTypingSummaryChange={setChatTypingName}
               isVisible={visible}
-              options={{
-                userId: user?.id,
-                userNickname: profile?.nickname,
-                username: profile?.username,
-              }}
+              options={chatViewOptions}
               focusedMentionId={params.mention}
-              mentionMembers={members.map((member) => ({
-                user_id: member.user_id,
-                username: member.username,
-                nickname: member.nickname,
-              }))}
+              mentionMembers={chatMentionMembers}
             />
           )}
         </View>
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          scrollEventThrottle={16}
+          scrollEventThrottle={32}
           onScroll={handleScroll}
           contentContainerStyle={[localStyles.scrollContent, { paddingBottom: bottomSpacer }]}
           refreshControl={

@@ -77,7 +77,7 @@ export function CompareOverviewHeroCard({
     <View style={styles.heroCard} testID="compare-overview-hero">
       <View style={styles.heroTopRow}>
         <View style={styles.heroSideCol}>
-          <Text variant="meta" color="textMid" numberOfLines={1}>
+          <Text variant="meta" color="textMid">
             {data.left.name}
           </Text>
           <Text variant="numL" color="textHi" tabular style={styles.heroBigPct}>
@@ -91,7 +91,7 @@ export function CompareOverviewHeroCard({
         <VennSyncDiagram inSyncPct={data.in_sync_pct} />
 
         <View style={styles.heroSideCol}>
-          <Text variant="meta" color="textMid" numberOfLines={1}>
+          <Text variant="meta" color="textMid">
             {data.right.name}
           </Text>
           <Text variant="numL" color="textHi" tabular style={styles.heroBigPct}>
@@ -393,7 +393,7 @@ export function CompareMealsProCard({
 
   const renderCol = (name: string, summary: typeof detail.left, isRightCol: boolean) => (
     <View style={[styles.splitCol, isRightCol ? styles.splitColBorder : null]}>
-      <Text variant="meta" color="textLo" numberOfLines={1}>
+      <Text variant="meta" color="textLo">
         {`${name} · ${t('compareV1.mostLogged')}`}
       </Text>
       {!summary.shared ? (
@@ -413,7 +413,7 @@ export function CompareMealsProCard({
             ) : (
               summary.top_items.map((item) => (
                 <View key={item.name} style={styles.mealItemRow}>
-                  <Text variant="meta" color="textHi" numberOfLines={1} style={styles.flexOne}>
+                  <Text variant="meta" color="textHi" style={styles.flexOne}>
                     {item.name}
                   </Text>
                   <Text variant="meta" color="textHi" tabular style={styles.boldText}>
@@ -614,12 +614,7 @@ export function CompareTodayView({
                         <View style={styles.smallCheckCircle}>
                           <CheckIcon size={11} color={colors.onBrand} strokeWidth={2.4} />
                         </View>
-                        <Text
-                          variant="meta"
-                          color="textHi"
-                          style={styles.boldText}
-                          numberOfLines={2}
-                        >
+                        <Text variant="meta" color="textHi" style={styles.boldText}>
                           {row.left_label}
                         </Text>
                       </View>
@@ -669,12 +664,7 @@ export function CompareTodayView({
                         <View style={styles.smallCheckCircle}>
                           <CheckIcon size={11} color={colors.onBrand} strokeWidth={2.4} />
                         </View>
-                        <Text
-                          variant="meta"
-                          color="textHi"
-                          style={styles.boldText}
-                          numberOfLines={2}
-                        >
+                        <Text variant="meta" color="textHi" style={styles.boldText}>
                           {row.right_label}
                         </Text>
                       </View>

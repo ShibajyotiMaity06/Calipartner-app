@@ -62,7 +62,7 @@ export function CoachMealDraftCard({
           <Text variant="eyebrow" color="textLo">
             {t('captureV1.aiEstimateEyebrow')}
           </Text>
-          <Text variant="titleS" color="textHi" numberOfLines={2}>
+          <Text variant="titleS" color="textHi">
             {draft.description}
           </Text>
           <Text variant="meta" color="textLo">
@@ -101,13 +101,13 @@ export function CoachMealDraftCard({
         {draft.items.map((item, index) => (
           <View key={`${item.name}-${index}`}>
             <View style={styles.itemRow}>
-              <Text variant="rowTitle" color="textHi" style={styles.itemName} numberOfLines={1}>
+              <Text variant="rowTitle" color="textHi" style={styles.itemName}>
                 {item.name}
                 <Text variant="meta" color="textLo">
                   {` · ${item.quantity} ${item.unit}`}
                 </Text>
               </Text>
-              <Text variant="label" tabular color="textHi">
+              <Text variant="label" tabular color="textHi" style={styles.itemKcal}>
                 {Math.round(item.calories)}
                 <Text variant="meta" color="textLo">
                   {' kcal'}
@@ -200,13 +200,17 @@ const styles = StyleSheet.create({
   },
   itemRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: space.sm,
     paddingVertical: space.sm,
   },
   itemName: {
     flex: 1,
+    flexShrink: 1,
+  },
+  itemKcal: {
+    flexShrink: 0,
   },
   divider: {
     height: borders.width,

@@ -59,7 +59,6 @@ export function CoachSuggestionCard({ suggestion, onLog }: CoachSuggestionCardPr
 
       <Text
         style={[styles.title, { color: colors.text }]}
-        numberOfLines={2}
         testID={`text-suggestion-title-${suggestion.id}`}
       >
         {suggestion.title}

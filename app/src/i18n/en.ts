@@ -1354,6 +1354,7 @@ export const en = {
     menuPrivacy: 'Privacy & Data',
     menuHistory: 'Conversation history',
     menuNewChat: 'Start new chat',
+    menuClose: 'Close menu',
     attachMealTitle: "Discuss today's meal",
     attachMealEmpty: 'No meals logged today yet',
     attachMealPrompt: 'How is my {title} looking?',

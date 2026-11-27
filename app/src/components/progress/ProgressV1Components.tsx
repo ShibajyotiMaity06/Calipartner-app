@@ -304,13 +304,7 @@ export function ProgressWeightTabV1({
             {t('progressV1.trendTitle')}
           </Text>
           {trendRightLabel ? (
-            <Text
-              variant="meta"
-              color="textLo"
-              numberOfLines={1}
-              tabular
-              style={styles.flexShrinkOne}
-            >
+            <Text variant="meta" color="textLo" tabular style={styles.flexShrinkOne}>
               {trendRightLabel}
             </Text>
           ) : null}
@@ -382,28 +376,28 @@ export function ProgressWeightTabV1({
       {/* Bottom 3 stats */}
       <View style={styles.statsThreeRow}>
         <Pressable onPress={onOpenHistory} style={styles.statTile}>
-          <Text style={styles.statValText} tabular numberOfLines={1}>
+          <Text style={styles.statValText} tabular>
             {periodChangeKg != null ? formatSignedDelta(periodChangeKg, useLb, unitLabel) : '—'}
           </Text>
-          <Text variant="meta" color="textLo" numberOfLines={1}>
+          <Text variant="meta" color="textLo">
             {t('progressV1.totalChange')}
           </Text>
         </Pressable>
 
         <Pressable onPress={onOpenHistory} style={styles.statTile}>
-          <Text style={styles.statValText} tabular numberOfLines={1}>
+          <Text style={styles.statValText} tabular>
             {paceKg != null ? formatSignedDelta(paceKg, useLb, unitLabel) : '—'}
           </Text>
-          <Text variant="meta" color="textLo" numberOfLines={1}>
+          <Text variant="meta" color="textLo">
             {t('progressV1.perWeek')}
           </Text>
         </Pressable>
 
         <Pressable onPress={onOpenHistory} style={styles.statTile} testID="weight-checkins-tile">
-          <Text style={styles.statValText} tabular numberOfLines={1}>
+          <Text style={styles.statValText} tabular>
             {String(periodCheckIns)}
           </Text>
-          <Text variant="meta" color="textLo" numberOfLines={1}>
+          <Text variant="meta" color="textLo">
             {t('progressV1.checkIns')}
           </Text>
         </Pressable>
@@ -832,26 +826,26 @@ export function ProgressWorkoutsTabV1({
       {/* Top 3 stats */}
       <View style={styles.statsThreeRow}>
         <View style={styles.statTile}>
-          <Text style={styles.statValLarge} tabular numberOfLines={1}>
+          <Text style={styles.statValLarge} tabular>
             {String(data.workouts.total_workouts)}
           </Text>
-          <Text variant="meta" color="textLo" numberOfLines={1}>
+          <Text variant="meta" color="textLo">
             {t('progressV1.workoutsCountLabel')}
           </Text>
         </View>
         <View style={styles.statTile}>
-          <Text style={styles.statValLarge} tabular numberOfLines={1}>
+          <Text style={styles.statValLarge} tabular>
             {trainedLabel}
           </Text>
-          <Text variant="meta" color="textLo" numberOfLines={1}>
+          <Text variant="meta" color="textLo">
             {t('progressV1.trainedLabel')}
           </Text>
         </View>
         <View style={styles.statTile}>
-          <Text style={styles.statValLarge} tabular numberOfLines={1}>
+          <Text style={styles.statValLarge} tabular>
             {data.workouts.sessions_per_week.toFixed(1)}
           </Text>
-          <Text variant="meta" color="textLo" numberOfLines={1}>
+          <Text variant="meta" color="textLo">
             {t('progressV1.perWeek')}
           </Text>
         </View>
@@ -939,10 +933,10 @@ export function ProgressWorkoutsTabV1({
                   <DumbbellIcon size={18} color={colors.textMid} />
                 </View>
                 <View style={styles.flexOne}>
-                  <Text variant="rowTitle" color="textHi" numberOfLines={1}>
+                  <Text variant="rowTitle" color="textHi">
                     {session.name}
                   </Text>
-                  <Text variant="meta" color="textLo" numberOfLines={1} tabular>
+                  <Text variant="meta" color="textLo" tabular>
                     {t('progressV1.sessionMeta', {
                       day: formatSessionDateLabel(session.localDate, today),
                       minutes: session.durationMinutes,

@@ -499,7 +499,7 @@ export function FastingTimerModal({
                       <Text variant="meta" color="textLo">
                         {t('fastingV1.startedLabel')}
                       </Text>
-                      <Text variant="rowTitle" color="textHi" tabular numberOfLines={2}>
+                      <Text variant="rowTitle" color="textHi" tabular>
                         {startedAtDate
                           ? formatRelativeStamp(startedAtDate)
                           : formatClock12(settings.eating_window_end)}
@@ -509,7 +509,7 @@ export function FastingTimerModal({
                       <Text variant="meta" color="textLo">
                         {t('fastingV1.endsLabel')}
                       </Text>
-                      <Text variant="rowTitle" color="textHi" tabular numberOfLines={2}>
+                      <Text variant="rowTitle" color="textHi" tabular>
                         {endsAtDate
                           ? formatRelativeStamp(endsAtDate)
                           : formatClock12(settings.eating_window_start)}

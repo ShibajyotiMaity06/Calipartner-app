@@ -96,9 +96,7 @@ export function S05ActiveSessionScreen({
         </Pressable>
 
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            {session.name}
-          </Text>
+          <Text style={styles.headerTitle}>{session.name}</Text>
           <Text style={styles.headerTimer}>{formatTimer(elapsed)}</Text>
         </View>
 
@@ -139,9 +137,7 @@ export function S05ActiveSessionScreen({
             {ex.sets.map((s) => (
               <View key={s.id} style={[styles.setRow, s.completed && styles.setRowCompleted]}>
                 <Text style={styles.setNumber}>{s.set_number}</Text>
-                <Text style={styles.prevText} numberOfLines={1}>
-                  {s.previous_performance || '—'}
-                </Text>
+                <Text style={styles.prevText}>{s.previous_performance || '—'}</Text>
 
                 {/* Weight Input */}
                 <View style={styles.inputWrapper}>

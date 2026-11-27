@@ -248,7 +248,7 @@ export function CaloriesDetailSheet({
               contributingFoods.map((entry) => (
                 <View key={entry.id} style={styles.contributorRow}>
                   <View style={{ flex: 1 }}>
-                    <Text variant="bodyS" color={dark.textHi} numberOfLines={1}>
+                    <Text variant="bodyS" color={dark.textHi}>
                       {entry.food_name}
                     </Text>
                     <Text variant="micro" color={dark.textLo}>

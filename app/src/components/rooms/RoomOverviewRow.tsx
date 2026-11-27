@@ -125,9 +125,7 @@ export function RoomOverviewRow({
         )}
 
         {/* Name */}
-        <Text style={[styles.nickname, { color: colors.text }]} numberOfLines={1}>
-          {m.nickname}
-        </Text>
+        <Text style={[styles.nickname, { color: colors.text }]}>{m.nickname}</Text>
 
         {/* Goal Completion */}
         <View style={[styles.goalPill, { backgroundColor: colors.surfaceAlt }]}>

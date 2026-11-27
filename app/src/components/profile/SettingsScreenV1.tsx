@@ -151,7 +151,6 @@ function SettingsSection({ title, rows }: { title?: string; rows: SettingsRowIte
                 variant="label"
                 color={row.danger ? 'danger' : 'textHi'}
                 style={styles.rowLabel}
-                numberOfLines={1}
               >
                 {row.label}
               </Text>
@@ -161,7 +160,6 @@ function SettingsSection({ title, rows }: { title?: string; rows: SettingsRowIte
                   <Text
                     variant="meta"
                     color={row.valueColor === 'apricot' ? 'apricot' : 'textLo'}
-                    numberOfLines={1}
                     style={styles.rowValue}
                   >
                     {row.value}

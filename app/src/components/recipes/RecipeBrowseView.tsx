@@ -207,7 +207,7 @@ export function RecipeBrowseView({
             />
           )}
 
-          <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
             {headerTitle ?? t('recipes.browse.title')}
           </Text>
 

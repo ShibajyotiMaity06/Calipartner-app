@@ -135,17 +135,12 @@ export function CoachHistoryModal({
                     testID={`btn-select-conv-${conv.id}`}
                   >
                     <View style={styles.titleRow}>
-                      <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
-                        {conv.title}
-                      </Text>
+                      <Text style={[styles.cardTitle, { color: colors.text }]}>{conv.title}</Text>
                       <Text style={[styles.cardDate, { color: colors.textMuted }]}>
                         {new Date(conv.updatedAt).toLocaleDateString()}
                       </Text>
                     </View>
-                    <Text
-                      style={[styles.cardSnippet, { color: colors.textMuted }]}
-                      numberOfLines={2}
-                    >
+                    <Text style={[styles.cardSnippet, { color: colors.textMuted }]}>
                       {conv.lastMessageSnippet || 'No messages'}
                     </Text>
                   </Pressable>

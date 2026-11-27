@@ -370,7 +370,7 @@ export function FoodPhotoResultsEditor({
             {floatingPins[0] ? (
               <View style={[styles.pinPill, styles.pinLeft]}>
                 <View style={styles.pinDot} />
-                <Text variant="micro" color="textHi" numberOfLines={1}>
+                <Text variant="micro" color="textHi">
                   {
                     (floatingPins[0].matched_food?.name || floatingPins[0].detected_name).split(
                       ',',
@@ -382,7 +382,7 @@ export function FoodPhotoResultsEditor({
             {floatingPins[1] ? (
               <View style={[styles.pinPill, styles.pinRight]}>
                 <View style={styles.pinDot} />
-                <Text variant="micro" color="textHi" numberOfLines={1}>
+                <Text variant="micro" color="textHi">
                   {
                     (floatingPins[1].matched_food?.name || floatingPins[1].detected_name).split(
                       ',',
@@ -394,7 +394,7 @@ export function FoodPhotoResultsEditor({
             {floatingPins[2] ? (
               <View style={[styles.pinPill, styles.pinBottom]}>
                 <View style={styles.pinDot} />
-                <Text variant="micro" color="textHi" numberOfLines={1}>
+                <Text variant="micro" color="textHi">
                   {
                     (floatingPins[2].matched_food?.name || floatingPins[2].detected_name).split(
                       ',',
@@ -433,7 +433,7 @@ export function FoodPhotoResultsEditor({
                   accessibilityRole={mealDescription ? 'button' : undefined}
                   testID="edit-meal-description"
                 >
-                  <Text variant="titleM" color="textHi" numberOfLines={2}>
+                  <Text variant="titleM" color="textHi">
                     {mealTitle}
                   </Text>
                 </Pressable>
@@ -540,12 +540,7 @@ export function FoodPhotoResultsEditor({
                         accessibilityLabel={`${foodName}, ${qtyDisplay}, ${kcal} kcal`}
                         style={styles.ingredientRow}
                       >
-                        <Text
-                          variant="rowTitle"
-                          color="textHi"
-                          numberOfLines={1}
-                          style={styles.ingredientName}
-                        >
+                        <Text variant="rowTitle" color="textHi" style={styles.ingredientName}>
                           {foodName}
                           <Text variant="meta" color="textLo">{` · ${qtyDisplay}`}</Text>
                         </Text>
@@ -756,7 +751,7 @@ export function FoodPhotoResultsEditor({
                       style={styles.searchResultRow}
                     >
                       <View style={styles.searchResultCopy}>
-                        <Text variant="rowTitle" color="textHi" numberOfLines={1}>
+                        <Text variant="rowTitle" color="textHi">
                           {f.name}
                         </Text>
                         <NutrientSummary
@@ -981,7 +976,7 @@ const styles = StyleSheet.create({
   },
   ingredientRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     paddingVertical: space.md,
     minHeight: 48,

@@ -133,7 +133,7 @@ export function ChatComposer({
             <V1Text variant="meta" color="textLo">
               {t('aha.replying', { name: reply.name })}
             </V1Text>
-            <V1Text variant="body" color="textHi" numberOfLines={1}>
+            <V1Text variant="body" color="textHi">
               {reply.text || t('aha.attachment')}
             </V1Text>
           </View>

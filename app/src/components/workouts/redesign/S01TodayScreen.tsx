@@ -321,9 +321,7 @@ export function S01TodayScreen({
               {todayPlanDay.exercises.map((ex, index) => (
                 <View key={ex.id || index} style={styles.exerciseRow}>
                   <Text style={styles.exerciseIndex}>{index + 1}</Text>
-                  <Text style={styles.exerciseName} numberOfLines={1}>
-                    {ex.name}
-                  </Text>
+                  <Text style={styles.exerciseName}>{ex.name}</Text>
                   <Text style={styles.exerciseSetsReps}>
                     {ex.target_sets} × {ex.target_reps}
                   </Text>
