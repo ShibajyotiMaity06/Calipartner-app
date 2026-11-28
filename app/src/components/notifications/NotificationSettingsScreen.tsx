@@ -1,31 +1,41 @@
-import { visualPrimitives } from '@calipartner/ui/tokens';
-import { Button } from '@calipartner/ui';
-import { NavigationIcon } from '@calipartner/ui';
-import { type as inputTypography } from '@calipartner/ui';
-import { Text } from '@calipartner/ui';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
-  Platform,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   TextInput,
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
-import { Ionicons } from '@expo/vector-icons';
-import { isQuietHours, type NotificationSettings } from '@calipartner/core';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { isQuietHours, type MealReminderTimes, type NotificationSettings } from '@calipartner/core';
+import {
+  BellIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  Chip,
+  MinusIcon,
+  PlusIcon,
+  PrimaryButton,
+  Switch,
+  Text,
+  borders,
+  colors,
+  fonts,
+  layout,
+  radius,
+  space,
+} from '@calipartner/ui/v1';
 import { useNotificationSettings } from '@/hooks/useNotificationSettings';
 import { useRooms } from '@/hooks/useRooms';
 import { t } from '@/i18n';
 import { getNotificationPermissionStatus } from '@/services/notificationPermissionService';
 import { isRoomChatMuted } from '@/services/notificationSettingsService';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 import { NotificationPrimerModal } from './NotificationPrimerModal';
 
 export interface NotificationSettingsScreenProps {
@@ -33,16 +43,90 @@ export interface NotificationSettingsScreenProps {
   testID?: string;
 }
 
+type MealSlot = 'breakfast' | 'lunch' | 'dinner';
+
+const DEFAULT_MEAL_TIMES: Record<MealSlot, string> = {
+  breakfast: '08:30',
+  lunch: '13:00',
+  dinner: '20:00',
+};
+
+const WATER_INTERVAL_OPTIONS = [1, 2, 3] as const;
+
+function format12HourTime(hhmm: string): string {
+  const [rawH, rawM] = hhmm.split(':');
+  const h = parseInt(rawH ?? '8', 10);
+  const m = parseInt(rawM ?? '0', 10);
+  if (Number.isNaN(h) || Number.isNaN(m)) return hhmm;
+  const suffix = h >= 12 ? 'PM' : 'AM';
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  return `${hour12}:${String(m).padStart(2, '0')} ${suffix}`;
+}
+
+function stepMinutes(hhmm: string, deltaMinutes: number): string {
+  const [rawH, rawM] = hhmm.split(':');
+  const h = parseInt(rawH ?? '8', 10);
+  const m = parseInt(rawM ?? '0', 10);
+  const total =
+    ((((Number.isNaN(h) ? 8 : h) * 60 + (Number.isNaN(m) ? 0 : m) + deltaMinutes) % 1440) + 1440) %
+    1440;
+  const nextH = Math.floor(total / 60);
+  const nextM = total % 60;
+  return `${String(nextH).padStart(2, '0')}:${String(nextM).padStart(2, '0')}`;
+}
+
+interface ToggleRowProps {
+  title: string;
+  subtitle?: string;
+  value: boolean;
+  onValueChange: (val: boolean) => void;
+  testID?: string;
+  divider?: boolean;
+  disabled?: boolean;
+}
+
+function SimpleSwitchRow({
+  title,
+  subtitle,
+  value,
+  onValueChange,
+  testID,
+  divider = false,
+  disabled = false,
+}: ToggleRowProps) {
+  return (
+    <View style={divider ? styles.rowDivider : undefined}>
+      <View style={styles.row}>
+        <View style={styles.rowText}>
+          <Text variant="label" color="textHi" style={styles.rowTitleText}>
+            {title}
+          </Text>
+          {subtitle ? (
+            <Text variant="meta" color="textLo">
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
+        <Switch
+          value={value}
+          onValueChange={onValueChange}
+          accessibilityLabel={title}
+          disabled={disabled}
+          testID={testID}
+        />
+      </View>
+    </View>
+  );
+}
+
 export function NotificationSettingsScreen({
   onBack,
   testID = 'notification-settings-screen',
 }: NotificationSettingsScreenProps) {
   const router = useRouter();
-  const { colors } = useTheme();
-
+  const insets = useSafeAreaInsets();
   const { settings, isLoading, error, updateSettings, muteRoomChat, refresh } =
     useNotificationSettings();
-
   const { rooms, loading: roomsLoading } = useRooms();
 
   const [permissionStatus, setPermissionStatus] = useState<Notifications.PermissionStatus>(
@@ -51,24 +135,28 @@ export function NotificationSettingsScreen({
   const [showPrimer, setShowPrimer] = useState(false);
   const [mutedRooms, setMutedRooms] = useState<Record<string, boolean>>({});
   const [loadingMuteRooms, setLoadingMuteRooms] = useState(false);
-
-  // Quiet hours local input state
-  const [quietStartInput, setQuietStartInput] = useState('');
-  const [quietEndInput, setQuietEndInput] = useState('');
+  const [quietStartInput, setQuietStartInput] = useState('22:00');
+  const [quietEndInput, setQuietEndInput] = useState('07:00');
+  const [showMorePrefs, setShowMorePrefs] = useState(false);
+  const [editingMealSlot, setEditingMealSlot] = useState<MealSlot | null>(null);
+  const [editingTimeValue, setEditingTimeValue] = useState('08:30');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const lastMealTimesRef = useRef<Record<MealSlot, string>>({ ...DEFAULT_MEAL_TIMES });
 
-  // Sync inputs with settings
   useEffect(() => {
     if (settings) {
       setQuietStartInput(settings.quiet_hours_start || '22:00');
       setQuietEndInput(settings.quiet_hours_end || '07:00');
+      for (const slot of ['breakfast', 'lunch', 'dinner'] as const) {
+        const val = settings.meal_times?.[slot];
+        if (val) lastMealTimesRef.current[slot] = val;
+      }
     }
   }, [settings]);
 
-  // Check system permission status
   useEffect(() => {
     let mounted = true;
-    getNotificationPermissionStatus().then((status) => {
+    void getNotificationPermissionStatus().then((status) => {
       if (mounted) setPermissionStatus(status);
     });
     return () => {
@@ -76,77 +164,104 @@ export function NotificationSettingsScreen({
     };
   }, []);
 
-  // Fetch mute status for each room
+  const roomIdsKey = (rooms ?? []).map((room) => room.id).join(',');
+
   useEffect(() => {
-    if (!rooms || rooms.length === 0) return;
+    if (!roomIdsKey) return;
+    const roomIds = roomIdsKey.split(',').filter(Boolean);
     let mounted = true;
     setLoadingMuteRooms(true);
-
     Promise.all(
-      rooms.map(async (room) => {
-        const muted = await isRoomChatMuted(room.id);
-        return { id: room.id, muted };
-      }),
+      roomIds.map(async (roomId) => ({
+        id: roomId,
+        muted: await isRoomChatMuted(roomId),
+      })),
     )
       .then((results) => {
         if (!mounted) return;
         const map: Record<string, boolean> = {};
-        for (const item of results) {
-          map[item.id] = item.muted;
-        }
+        for (const item of results) map[item.id] = item.muted;
         setMutedRooms(map);
       })
       .finally(() => {
         if (mounted) setLoadingMuteRooms(false);
       });
-
     return () => {
       mounted = false;
     };
-  }, [rooms]);
+  }, [roomIdsKey]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 2000);
+    setTimeout(() => setToastMessage(null), 1800);
   };
 
   const handleToggle = async (key: keyof NotificationSettings, value: boolean) => {
     if (!settings) return;
-    const res = await updateSettings({ [key]: value });
-    if (res) {
-      showToast(t('notifications.saveSuccess'));
+    const saved = await updateSettings({ [key]: value });
+    if (saved) showToast(t('notifications.saveSuccess'));
+  };
+
+  const handleMealSlotToggle = async (slot: MealSlot, enabled: boolean) => {
+    if (!settings) return;
+    const nextTimes: MealReminderTimes = { ...(settings.meal_times ?? {}) };
+    if (enabled) {
+      nextTimes[slot] = lastMealTimesRef.current[slot] || DEFAULT_MEAL_TIMES[slot];
+    } else {
+      if (nextTimes[slot]) lastMealTimesRef.current[slot] = nextTimes[slot]!;
+      nextTimes[slot] = '';
     }
+    const anyMealActive = Boolean(
+      nextTimes.breakfast || nextTimes.lunch || nextTimes.dinner || nextTimes.snacks,
+    );
+    const saved = await updateSettings({
+      meal_times: nextTimes,
+      meal_reminders_enabled: anyMealActive,
+    });
+    if (saved) showToast(t('notifications.saveSuccess'));
+  };
+
+  const handleWaterIntervalSelect = async (hours: number) => {
+    if (!settings) return;
+    const saved = await updateSettings({
+      water_interval_hours: hours,
+      water_reminders_enabled: true,
+    });
+    if (saved) showToast(t('notifications.saveSuccess'));
+  };
+
+  const handleSaveMealTime = async () => {
+    if (!settings || !editingMealSlot) return;
+    lastMealTimesRef.current[editingMealSlot] = editingTimeValue;
+    const nextTimes: MealReminderTimes = {
+      ...(settings.meal_times ?? {}),
+      [editingMealSlot]: editingTimeValue,
+    };
+    setEditingMealSlot(null);
+    const saved = await updateSettings({
+      meal_times: nextTimes,
+      meal_reminders_enabled: true,
+    });
+    if (saved) showToast(t('notifications.saveSuccess'));
   };
 
   const handleQuietHoursBlur = async () => {
     if (!settings) return;
     const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-    const validStart = timeRegex.test(quietStartInput.trim());
-    const validEnd = timeRegex.test(quietEndInput.trim());
-
-    if (!validStart || !validEnd) {
-      Alert.alert(
-        t('notifications.quietHours.sectionTitle'),
-        t('notifications.quietHours.invalidTimeError'),
-      );
+    if (!timeRegex.test(quietStartInput.trim()) || !timeRegex.test(quietEndInput.trim())) {
       setQuietStartInput(settings.quiet_hours_start || '22:00');
       setQuietEndInput(settings.quiet_hours_end || '07:00');
       return;
     }
-
     if (
       quietStartInput.trim() !== settings.quiet_hours_start ||
       quietEndInput.trim() !== settings.quiet_hours_end
     ) {
-      const res = await updateSettings({
+      const saved = await updateSettings({
         quiet_hours_start: quietStartInput.trim(),
         quiet_hours_end: quietEndInput.trim(),
       });
-      if (res) {
-        showToast(t('notifications.saveSuccess'));
-      }
+      if (saved) showToast(t('notifications.saveSuccess'));
     }
   };
 
@@ -155,7 +270,6 @@ export function NotificationSettingsScreen({
     setMutedRooms((prev) => ({ ...prev, [roomId]: nextMuted }));
     const ok = await muteRoomChat(roomId, nextMuted);
     if (!ok) {
-      // Revert on failure
       setMutedRooms((prev) => ({ ...prev, [roomId]: currentMuted }));
     } else {
       showToast(t('notifications.saveSuccess'));
@@ -163,60 +277,32 @@ export function NotificationSettingsScreen({
   };
 
   const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      router.back();
-    }
+    if (onBack) onBack();
+    else router.back();
   };
-
-  // Determine current quiet hours status
-  const now = new Date();
-  const currentLocalTime = `${String(now.getHours()).padStart(2, '0')}:${String(
-    now.getMinutes(),
-  ).padStart(2, '0')}`;
-  const isCurrentlyInQuietHours =
-    Boolean(settings?.quiet_hours_enabled) &&
-    isQuietHours(
-      currentLocalTime,
-      settings?.quiet_hours_start || '22:00',
-      settings?.quiet_hours_end || '07:00',
-    );
 
   if (isLoading) {
     return (
-      <View
-        style={[styles.container, styles.center, { backgroundColor: colors.background }]}
-        testID={`${testID}-loading`}
-      >
-        <ActivityIndicator size="large" color={colors.accent} />
-        <Text style={[styles.statusText, { color: colors.textMuted }]}>
-          {t('notifications.loading')}
-        </Text>
+      <View style={[styles.root, styles.centered]} testID={`${testID}-loading`}>
+        <ActivityIndicator size="large" color={colors.apricot} />
       </View>
     );
   }
 
   if (error && !settings) {
     return (
-      <View
-        style={[styles.container, styles.center, { backgroundColor: colors.background }]}
-        testID={`${testID}-error`}
-      >
-        <Ionicons name="alert-circle-outline" size={48} color={colors.textMuted} />
-        <Text style={[styles.errorTitle, { color: colors.text }]}>{t('notifications.error')}</Text>
-        <Text style={[styles.statusText, { color: colors.textMuted, marginBottom: spacing.md }]}>
+      <View style={[styles.root, styles.centered, styles.errorPad]} testID={`${testID}-error`}>
+        <Text variant="titleS" color="textHi">
+          {t('notifications.error')}
+        </Text>
+        <Text variant="meta" color="textLo" style={styles.errorCenter}>
           {error}
         </Text>
-        <Button
-          variant="secondary"
-          fullWidth={false}
-          label={t('notifications.retry')}
-          testID="btn-retry-notification-settings"
-          accessibilityRole="button"
-          accessibilityLabel={t('notifications.retry')}
-          style={[styles.primaryButton, { backgroundColor: colors.accent }]}
+        <PrimaryButton
+          title={t('notifications.retry')}
           onPress={() => refresh()}
+          compact
+          testID="btn-retry-notification-settings"
         />
       </View>
     );
@@ -224,708 +310,698 @@ export function NotificationSettingsScreen({
 
   if (!settings) {
     return (
-      <View
-        style={[styles.container, styles.center, { backgroundColor: colors.background }]}
-        testID={`${testID}-empty`}
-      >
-        <Text style={[styles.statusText, { color: colors.textMuted }]}>
+      <View style={[styles.root, styles.centered]} testID={`${testID}-empty`}>
+        <Text variant="meta" color="textLo">
           {t('notifications.empty')}
         </Text>
       </View>
     );
   }
 
-  const isPaused = settings.pause_all;
+  const pushEnabled = !settings.pause_all;
+  const now = new Date();
+  const currentLocalTime = `${String(now.getHours()).padStart(2, '0')}:${String(
+    now.getMinutes(),
+  ).padStart(2, '0')}`;
+  const isCurrentlyInQuietHours =
+    Boolean(settings.quiet_hours_enabled) &&
+    isQuietHours(
+      currentLocalTime,
+      settings.quiet_hours_start || '22:00',
+      settings.quiet_hours_end || '07:00',
+    );
+
+  const mealRows: Array<{ slot: MealSlot; label: string }> = [
+    { slot: 'breakfast', label: t('settingsV1.notifBreakfast') },
+    { slot: 'lunch', label: t('settingsV1.notifLunch') },
+    { slot: 'dinner', label: t('settingsV1.notifDinner') },
+  ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]} testID={testID}>
-      {/* Top Header */}
-      <View
-        style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}
-      >
-        <Button
-          variant="tertiary"
-          fullWidth={false}
-          label={t('notifications.back')}
-          iconOnly
-          icon={<NavigationIcon action="back" />}
-          testID="btn-notification-settings-back"
+    <View style={styles.root} testID={testID}>
+      <View style={[styles.topBar, { paddingTop: Math.max(space.sm, insets.top + 6) }]}>
+        <Pressable
+          onPress={handleBack}
+          hitSlop={6}
           accessibilityRole="button"
           accessibilityLabel={t('notifications.back')}
-          style={styles.backButton}
-          onPress={handleBack}
-        />
-        <View style={styles.headerTitleContainer}>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>
-            {t('notifications.title')}
-          </Text>
-          <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
-            {t('notifications.subtitle')}
-          </Text>
-        </View>
+          style={({ pressed }) => [styles.backButton, pressed ? styles.backPressed : null]}
+          testID="btn-notification-settings-back"
+        >
+          <ChevronLeftIcon size={18} color={colors.textHi} />
+        </Pressable>
+        <Text variant="titleS" color="textHi" accessibilityRole="header" style={styles.headerTitle}>
+          {t('settingsV1.notifTitle')}
+        </Text>
+        <View style={styles.headerSpacer} />
       </View>
 
-      {/* Floating Save Toast */}
-      {toastMessage && (
-        <View
-          style={[styles.toast, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
-        >
-          <Ionicons name="checkmark-circle" size={16} color={colors.accent} />
-          <Text style={[styles.toastText, { color: colors.text }]}>{toastMessage}</Text>
+      {toastMessage ? (
+        <View style={styles.toastPill}>
+          <CheckIcon size={14} color={colors.apricot} />
+          <Text variant="meta" color="textHi">
+            {toastMessage}
+          </Text>
         </View>
-      )}
+      ) : null}
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Permission Priming Banner if not Granted */}
-        {permissionStatus !== Notifications.PermissionStatus.GRANTED && (
-          <Pressable
-            testID="btn-primer-prompt"
-            accessibilityRole="button"
-            accessibilityLabel={t('notifications.permission.primerTitle')}
-            style={[
-              styles.banner,
-              { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-            ]}
-            onPress={() => setShowPrimer(true)}
-          >
-            <Ionicons name="notifications-circle-outline" size={32} color={colors.accent} />
-            <View style={styles.bannerText}>
-              <Text style={[styles.bannerTitle, { color: colors.text }]}>
-                {t('notifications.permission.primerTitle')}
-              </Text>
-              <Text style={[styles.bannerSubtitle, { color: colors.textMuted }]}>
-                {t('notifications.permission.enableButton')} →
-              </Text>
-            </View>
-          </Pressable>
-        )}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: Math.max(space.xxl, insets.bottom + space.xl) },
+        ]}
+      >
+        <View style={styles.innerWrap}>
+          {permissionStatus !== Notifications.PermissionStatus.GRANTED ? (
+            <Pressable
+              testID="btn-primer-prompt"
+              accessibilityRole="button"
+              accessibilityLabel={t('notifications.permission.primerTitle')}
+              onPress={() => setShowPrimer(true)}
+              style={({ pressed }) => [
+                styles.cardBox,
+                styles.bannerRow,
+                pressed ? styles.rowPressed : null,
+              ]}
+            >
+              <View style={styles.bannerIconTile}>
+                <BellIcon size={18} color={colors.apricot} />
+              </View>
+              <View style={styles.rowText}>
+                <Text variant="label" color="textHi" style={styles.rowTitleText}>
+                  {t('notifications.permission.primerTitle')}
+                </Text>
+                <Text variant="meta" color="apricot">
+                  {t('notifications.permission.enableButton')}
+                </Text>
+              </View>
+              <ChevronRightIcon size={16} color={colors.textLo} />
+            </Pressable>
+          ) : null}
 
-        {/* Master Pause Switch Card */}
-        <View
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <View style={styles.row}>
-            <View style={styles.rowText}>
-              <Text style={[styles.rowTitle, { color: colors.text }]}>
-                {t('notifications.pauseAll.title')}
-              </Text>
-              <Text style={[styles.rowDesc, { color: colors.textMuted }]}>
-                {t('notifications.pauseAll.description')}
-              </Text>
-            </View>
-            <Switch
+          {error ? (
+            <Text variant="meta" color="danger" accessibilityRole="alert">
+              {error}
+            </Text>
+          ) : null}
+
+          {/* Top Master Switch Card */}
+          <View style={styles.cardBox}>
+            <SimpleSwitchRow
+              title={t('settingsV1.notifPushTitle')}
+              subtitle={t('settingsV1.notifPushSub')}
+              value={pushEnabled}
+              onValueChange={(val) => void handleToggle('pause_all', !val)}
               testID="switch-pause-all"
-              accessibilityRole="switch"
-              accessibilityLabel={t('notifications.pauseAll.title')}
-              accessibilityState={{ checked: isPaused }}
-              value={isPaused}
-              onValueChange={(val) => handleToggle('pause_all', val)}
-              trackColor={{ false: colors.border, true: colors.accent }}
-              thumbColor={colors.surface}
             />
           </View>
-        </View>
 
-        {/* Section: Push Notifications */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            {t('notifications.types.sectionTitle')}
-          </Text>
-        </View>
+          <View
+            style={[styles.groupStack, !pushEnabled ? styles.dimmedGroup : null]}
+            pointerEvents={pushEnabled ? 'auto' : 'none'}
+          >
+            {/* MEALS */}
+            <View style={styles.sectionBlock}>
+              <Text variant="eyebrow" color="textLo" style={styles.eyebrow}>
+                {t('settingsV1.notifMealsEyebrow')}
+              </Text>
+              <View style={styles.cardBox}>
+                {mealRows.map((row, idx) => {
+                  const configuredTime = settings.meal_times?.[row.slot];
+                  const isMealOn =
+                    Boolean(settings.meal_reminders_enabled) && Boolean(configuredTime);
+                  const displayTime =
+                    configuredTime ||
+                    lastMealTimesRef.current[row.slot] ||
+                    DEFAULT_MEAL_TIMES[row.slot];
+                  return (
+                    <View
+                      key={row.slot}
+                      style={[styles.row, idx < mealRows.length - 1 ? styles.rowDivider : null]}
+                    >
+                      <Text
+                        variant="label"
+                        color="textHi"
+                        style={[styles.rowText, styles.rowTitleText]}
+                      >
+                        {row.label}
+                      </Text>
+                      <View style={styles.mealRightCluster}>
+                        <Pressable
+                          onPress={() => {
+                            setEditingMealSlot(row.slot);
+                            setEditingTimeValue(displayTime);
+                          }}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${row.label} ${format12HourTime(displayTime)}`}
+                          style={({ pressed }) => [
+                            styles.timePill,
+                            pressed ? styles.timePillPressed : null,
+                          ]}
+                          testID={`btn-meal-time-${row.slot}`}
+                        >
+                          <Text variant="meta" color="textMid" tabular>
+                            {format12HourTime(displayTime)}
+                          </Text>
+                        </Pressable>
+                        <Switch
+                          value={isMealOn}
+                          onValueChange={(val) => void handleMealSlotToggle(row.slot, val)}
+                          accessibilityLabel={`${row.label} reminder`}
+                          testID={`switch-meal-${row.slot}`}
+                        />
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
 
-        <View
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              opacity: isPaused ? 0.45 : 1,
-            },
-          ]}
-          pointerEvents={isPaused ? 'none' : 'auto'}
-        >
-          {/* Nudge */}
-          <SettingToggleRow
-            testID="switch-nudge"
-            title={t('notifications.types.nudge')}
-            desc={t('notifications.types.nudgeDesc')}
-            value={settings.nudge_enabled}
-            onChange={(val) => handleToggle('nudge_enabled', val)}
-            colors={colors}
-          />
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          {/* Partner Activity */}
-          <SettingToggleRow
-            testID="switch-partner-activity"
-            title={t('notifications.types.partnerActivity')}
-            desc={t('notifications.types.partnerActivityDesc')}
-            value={settings.partner_activity_enabled}
-            onChange={(val) => handleToggle('partner_activity_enabled', val)}
-            colors={colors}
-          />
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          {/* Room Requests */}
-          <SettingToggleRow
-            testID="switch-room-requests"
-            title={t('notifications.types.roomRequests')}
-            desc={t('notifications.types.roomRequestsDesc')}
-            value={settings.room_requests_enabled}
-            onChange={(val) => handleToggle('room_requests_enabled', val)}
-            colors={colors}
-          />
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          {/* Chat Messages */}
-          <SettingToggleRow
-            testID="switch-chat-messages"
-            title={t('notifications.types.chatMessages')}
-            desc={t('notifications.types.chatMessagesDesc')}
-            value={settings.chat_messages_enabled}
-            onChange={(val) => handleToggle('chat_messages_enabled', val)}
-            colors={colors}
-          />
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          {/* Streak Reminders */}
-          <SettingToggleRow
-            testID="switch-streak-reminders"
-            title={t('notifications.types.streakReminders')}
-            desc={t('notifications.types.streakRemindersDesc')}
-            value={settings.streak_reminders_enabled}
-            onChange={(val) => handleToggle('streak_reminders_enabled', val)}
-            colors={colors}
-          />
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          {/* Weekly Summary */}
-          <SettingToggleRow
-            testID="switch-weekly-summary"
-            title={t('notifications.types.weeklySummary')}
-            desc={t('notifications.types.weeklySummaryDesc')}
-            value={settings.weekly_summary_enabled}
-            onChange={(val) => handleToggle('weekly_summary_enabled', val)}
-            colors={colors}
-          />
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          {/* Room Trial */}
-          <SettingToggleRow
-            testID="switch-trial-reminders"
-            title={t('notifications.types.trialReminders')}
-            desc={t('notifications.types.trialRemindersDesc')}
-            value={settings.trial_reminders_enabled}
-            onChange={(val) => handleToggle('trial_reminders_enabled', val)}
-            colors={colors}
-          />
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          {/* Billing Alerts */}
-          <SettingToggleRow
-            testID="switch-billing-alerts"
-            title={t('notifications.types.billingAlerts')}
-            desc={t('notifications.types.billingAlertsDesc')}
-            value={settings.billing_alerts_enabled}
-            onChange={(val) => handleToggle('billing_alerts_enabled', val)}
-            colors={colors}
-          />
-        </View>
-
-        {/* Section: Daily Local Reminders */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            {t('notifications.localReminders.sectionTitle')}
-          </Text>
-        </View>
-
-        <View
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              opacity: isPaused ? 0.45 : 1,
-            },
-          ]}
-          pointerEvents={isPaused ? 'none' : 'auto'}
-        >
-          {/* Meals */}
-          <SettingToggleRow
-            testID="switch-meal-reminders"
-            title={t('notifications.localReminders.meals')}
-            desc={t('notifications.localReminders.mealsDesc')}
-            value={settings.meal_reminders_enabled}
-            onChange={(val) => handleToggle('meal_reminders_enabled', val)}
-            colors={colors}
-          />
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          {/* Water */}
-          <SettingToggleRow
-            testID="switch-water-reminders"
-            title={t('notifications.localReminders.water')}
-            desc={t('notifications.localReminders.waterDesc')}
-            value={settings.water_reminders_enabled}
-            onChange={(val) => handleToggle('water_reminders_enabled', val)}
-            colors={colors}
-          />
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          {/* Weigh In */}
-          <SettingToggleRow
-            testID="switch-weigh-in-reminders"
-            title={t('notifications.localReminders.weighIn')}
-            desc={t('notifications.localReminders.weighInDesc')}
-            value={settings.weigh_in_reminders_enabled}
-            onChange={(val) => handleToggle('weigh_in_reminders_enabled', val)}
-            colors={colors}
-          />
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          {/* Fasting */}
-          <SettingToggleRow
-            testID="switch-fasting-reminders"
-            title={t('notifications.localReminders.fasting')}
-            desc={t('notifications.localReminders.fastingDesc')}
-            value={settings.fasting_reminders_enabled}
-            onChange={(val) => handleToggle('fasting_reminders_enabled', val)}
-            colors={colors}
-          />
-        </View>
-
-        {/* Section: Quiet Hours */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            {t('notifications.quietHours.sectionTitle')}
-          </Text>
-        </View>
-
-        <View
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              opacity: isPaused ? 0.45 : 1,
-            },
-          ]}
-          pointerEvents={isPaused ? 'none' : 'auto'}
-        >
-          <SettingToggleRow
-            testID="switch-quiet-hours"
-            title={t('notifications.quietHours.enable')}
-            desc={t('notifications.quietHours.enableDesc')}
-            value={settings.quiet_hours_enabled}
-            onChange={(val) => handleToggle('quiet_hours_enabled', val)}
-            colors={colors}
-          />
-
-          {settings.quiet_hours_enabled && (
-            <>
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-              <View style={styles.timeInputsRow}>
-                <View style={styles.timeInputCol}>
-                  <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
-                    {t('notifications.quietHours.startLabel')}
-                  </Text>
-                  <TextInput
-                    testID="input-quiet-hours-start"
-                    accessibilityLabel={t('notifications.quietHours.startLabel')}
-                    style={[
-                      [
-                        styles.timeInput,
-                        {
-                          backgroundColor: colors.surfaceAlt,
-                          borderColor: colors.border,
-                          color: colors.text,
-                        },
-                      ],
-                      { fontFamily: inputTypography.body.fontFamily },
-                    ]}
-                    value={quietStartInput}
-                    onChangeText={setQuietStartInput}
-                    onBlur={handleQuietHoursBlur}
-                    placeholder="22:00"
-                    placeholderTextColor={colors.textMuted}
-                    maxLength={5}
-                    autoCapitalize="none"
-                  />
-                </View>
-
-                <View style={styles.timeInputCol}>
-                  <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
-                    {t('notifications.quietHours.endLabel')}
-                  </Text>
-                  <TextInput
-                    testID="input-quiet-hours-end"
-                    accessibilityLabel={t('notifications.quietHours.endLabel')}
-                    style={[
-                      [
-                        styles.timeInput,
-                        {
-                          backgroundColor: colors.surfaceAlt,
-                          borderColor: colors.border,
-                          color: colors.text,
-                        },
-                      ],
-                      { fontFamily: inputTypography.body.fontFamily },
-                    ]}
-                    value={quietEndInput}
-                    onChangeText={setQuietEndInput}
-                    onBlur={handleQuietHoursBlur}
-                    placeholder="07:00"
-                    placeholderTextColor={colors.textMuted}
-                    maxLength={5}
-                    autoCapitalize="none"
-                  />
+            {/* HYDRATION */}
+            <View style={styles.sectionBlock}>
+              <Text variant="eyebrow" color="textLo" style={styles.eyebrow}>
+                {t('settingsV1.notifHydrationEyebrow')}
+              </Text>
+              <View style={[styles.cardBox, styles.hydrationCard]}>
+                <SimpleSwitchRow
+                  title={t('settingsV1.notifWaterTitle')}
+                  subtitle={t('settingsV1.notifWaterSub')}
+                  value={settings.water_reminders_enabled}
+                  onValueChange={(val) => void handleToggle('water_reminders_enabled', val)}
+                  testID="switch-water-reminders"
+                />
+                <View style={styles.intervalRow}>
+                  {WATER_INTERVAL_OPTIONS.map((hours) => {
+                    const selected = settings.water_interval_hours === hours;
+                    return (
+                      <Chip
+                        key={hours}
+                        label={t('settingsV1.notifEveryHours', { hours })}
+                        selected={selected}
+                        onPress={() => void handleWaterIntervalSelect(hours)}
+                        testID={`chip-water-interval-${hours}h`}
+                        style={styles.intervalChip}
+                      />
+                    );
+                  })}
                 </View>
               </View>
-
-              {isCurrentlyInQuietHours && (
-                <View
-                  style={[
-                    styles.quietBadge,
-                    { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-                  ]}
-                >
-                  <Ionicons name="moon-outline" size={16} color={colors.accent} />
-                  <Text style={[styles.quietBadgeText, { color: colors.text }]}>
-                    {t('notifications.quietHours.activeNotice', {
-                      start: settings.quiet_hours_start,
-                      end: settings.quiet_hours_end,
-                    })}
-                  </Text>
-                </View>
-              )}
-            </>
-          )}
-        </View>
-
-        {/* Section: Chat Privacy */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            {t('notifications.chatPrivacy.sectionTitle')}
-          </Text>
-        </View>
-
-        <View
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              opacity: isPaused ? 0.45 : 1,
-            },
-          ]}
-          pointerEvents={isPaused ? 'none' : 'auto'}
-        >
-          <SettingToggleRow
-            testID="switch-hide-previews"
-            title={t('notifications.chatPrivacy.hidePreviews')}
-            desc={t('notifications.chatPrivacy.hidePreviewsDesc')}
-            value={settings.hide_previews}
-            onChange={(val) => handleToggle('hide_previews', val)}
-            colors={colors}
-          />
-        </View>
-
-        {/* Section: Mute Specific Rooms */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            {t('notifications.roomMute.sectionTitle')}
-          </Text>
-        </View>
-
-        <View
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              opacity: isPaused ? 0.45 : 1,
-            },
-          ]}
-          pointerEvents={isPaused ? 'none' : 'auto'}
-        >
-          {roomsLoading || loadingMuteRooms ? (
-            <View style={styles.inlineLoading}>
-              <ActivityIndicator size="small" color={colors.accent} />
             </View>
-          ) : rooms.length === 0 ? (
-            <View style={styles.emptyRooms}>
-              <Text style={[styles.emptyRoomsText, { color: colors.textMuted }]}>
-                {t('notifications.roomMute.noRooms')}
+
+            {/* FASTING AND SQUAD */}
+            <View style={styles.sectionBlock}>
+              <Text variant="eyebrow" color="textLo" style={styles.eyebrow}>
+                {t('settingsV1.notifFastingSquadEyebrow')}
               </Text>
+              <View style={styles.cardBox}>
+                <SimpleSwitchRow
+                  title={t('settingsV1.notifFastingTitle')}
+                  subtitle={t('settingsV1.notifFastingSub')}
+                  value={settings.fasting_reminders_enabled}
+                  onValueChange={(val) => void handleToggle('fasting_reminders_enabled', val)}
+                  testID="switch-fasting-reminders"
+                  divider
+                />
+                <SimpleSwitchRow
+                  title={t('settingsV1.notifPartnerWorkout')}
+                  value={settings.partner_activity_enabled}
+                  onValueChange={(val) => void handleToggle('partner_activity_enabled', val)}
+                  testID="switch-partner-activity"
+                  divider
+                />
+                <SimpleSwitchRow
+                  title={t('settingsV1.notifSquadMessages')}
+                  value={settings.chat_messages_enabled}
+                  onValueChange={(val) => void handleToggle('chat_messages_enabled', val)}
+                  testID="switch-chat-messages"
+                />
+              </View>
             </View>
-          ) : (
-            rooms.map((room, index) => {
-              const isMuted = Boolean(mutedRooms[room.id]);
-              return (
-                <React.Fragment key={room.id}>
-                  {index > 0 && (
-                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                  )}
-                  <View style={styles.row}>
-                    <View style={styles.rowText}>
-                      <Text style={[styles.rowTitle, { color: colors.text }]}>{room.name}</Text>
-                      <Text style={[styles.rowDesc, { color: colors.textMuted }]}>
-                        {isMuted ? t('notifications.statusMuted') : t('notifications.statusActive')}
-                      </Text>
+
+            {/* Expandable Advanced Preferences preserving full backend capabilities */}
+            <Pressable
+              onPress={() => setShowMorePrefs((prev) => !prev)}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: showMorePrefs }}
+              style={styles.moreToggleRow}
+              testID="btn-notif-more-prefs"
+            >
+              <Text variant="meta" color="textLo">
+                {t('settingsV1.notifMorePrefs')}
+              </Text>
+              <ChevronDownIcon size={15} color={colors.textLo} />
+            </Pressable>
+
+            {showMorePrefs ? (
+              <View style={styles.groupStack}>
+                <View style={styles.cardBox}>
+                  <SimpleSwitchRow
+                    title={t('notifications.types.nudge')}
+                    subtitle={t('notifications.types.nudgeDesc')}
+                    value={settings.nudge_enabled}
+                    onValueChange={(val) => void handleToggle('nudge_enabled', val)}
+                    testID="switch-nudge"
+                    divider
+                  />
+                  <SimpleSwitchRow
+                    title={t('notifications.types.roomRequests')}
+                    subtitle={t('notifications.types.roomRequestsDesc')}
+                    value={settings.room_requests_enabled}
+                    onValueChange={(val) => void handleToggle('room_requests_enabled', val)}
+                    testID="switch-room-requests"
+                    divider
+                  />
+                  <SimpleSwitchRow
+                    title={t('notifications.types.streakReminders')}
+                    subtitle={t('notifications.types.streakRemindersDesc')}
+                    value={settings.streak_reminders_enabled}
+                    onValueChange={(val) => void handleToggle('streak_reminders_enabled', val)}
+                    testID="switch-streak-reminders"
+                    divider
+                  />
+                  <SimpleSwitchRow
+                    title={t('notifications.types.weeklySummary')}
+                    subtitle={t('notifications.types.weeklySummaryDesc')}
+                    value={settings.weekly_summary_enabled}
+                    onValueChange={(val) => void handleToggle('weekly_summary_enabled', val)}
+                    testID="switch-weekly-summary"
+                    divider
+                  />
+                  <SimpleSwitchRow
+                    title={t('notifications.localReminders.weighIn')}
+                    subtitle={t('notifications.localReminders.weighInDesc')}
+                    value={settings.weigh_in_reminders_enabled}
+                    onValueChange={(val) => void handleToggle('weigh_in_reminders_enabled', val)}
+                    testID="switch-weigh-in-reminders"
+                    divider
+                  />
+                  <SimpleSwitchRow
+                    title={t('notifications.chatPrivacy.hidePreviews')}
+                    subtitle={t('notifications.chatPrivacy.hidePreviewsDesc')}
+                    value={settings.hide_previews}
+                    onValueChange={(val) => void handleToggle('hide_previews', val)}
+                    testID="switch-hide-previews"
+                  />
+                </View>
+
+                <View style={styles.cardBox}>
+                  <SimpleSwitchRow
+                    title={t('notifications.quietHours.enable')}
+                    subtitle={
+                      isCurrentlyInQuietHours
+                        ? t('notifications.quietHours.activeNotice', {
+                            start: settings.quiet_hours_start,
+                            end: settings.quiet_hours_end,
+                          })
+                        : t('notifications.quietHours.enableDesc')
+                    }
+                    value={settings.quiet_hours_enabled}
+                    onValueChange={(val) => void handleToggle('quiet_hours_enabled', val)}
+                    testID="switch-quiet-hours"
+                  />
+                  {settings.quiet_hours_enabled ? (
+                    <View style={[styles.rowDividerTop, styles.quietInputsRow]}>
+                      <View style={styles.quietCol}>
+                        <Text variant="micro" color="textLo">
+                          {t('notifications.quietHours.startLabel')}
+                        </Text>
+                        <TextInput
+                          testID="input-quiet-hours-start"
+                          accessibilityLabel={t('notifications.quietHours.startLabel')}
+                          style={styles.quietInput}
+                          value={quietStartInput}
+                          onChangeText={setQuietStartInput}
+                          onBlur={() => void handleQuietHoursBlur()}
+                          placeholder="22:00"
+                          placeholderTextColor={colors.textOff}
+                          maxLength={5}
+                        />
+                      </View>
+                      <View style={styles.quietCol}>
+                        <Text variant="micro" color="textLo">
+                          {t('notifications.quietHours.endLabel')}
+                        </Text>
+                        <TextInput
+                          testID="input-quiet-hours-end"
+                          accessibilityLabel={t('notifications.quietHours.endLabel')}
+                          style={styles.quietInput}
+                          value={quietEndInput}
+                          onChangeText={setQuietEndInput}
+                          onBlur={() => void handleQuietHoursBlur()}
+                          placeholder="07:00"
+                          placeholderTextColor={colors.textOff}
+                          maxLength={5}
+                        />
+                      </View>
                     </View>
-                    <Switch
-                      testID={`switch-room-mute-${room.id}`}
-                      accessibilityRole="switch"
-                      accessibilityLabel={`${room.name} ${isMuted ? 'Muted' : 'Unmuted'}`}
-                      accessibilityState={{ checked: isMuted }}
-                      value={isMuted}
-                      onValueChange={() => handleRoomMuteToggle(room.id, isMuted)}
-                      trackColor={{ false: colors.border, true: colors.accent }}
-                      thumbColor={colors.surface}
-                    />
+                  ) : null}
+                </View>
+
+                {rooms.length > 0 && !loadingMuteRooms && !roomsLoading ? (
+                  <View style={styles.cardBox}>
+                    {rooms.map((room, idx) => {
+                      const isMuted = Boolean(mutedRooms[room.id]);
+                      return (
+                        <SimpleSwitchRow
+                          key={room.id}
+                          title={room.name}
+                          subtitle={
+                            isMuted
+                              ? t('settingsV1.notifMutedLabel')
+                              : t('settingsV1.notifActiveLabel')
+                          }
+                          value={isMuted}
+                          onValueChange={() => void handleRoomMuteToggle(room.id, isMuted)}
+                          testID={`switch-mute-room-${room.id}`}
+                          divider={idx < rooms.length - 1}
+                        />
+                      );
+                    })}
                   </View>
-                </React.Fragment>
-              );
-            })
-          )}
+                ) : null}
+              </View>
+            ) : null}
+          </View>
         </View>
       </ScrollView>
 
-      {/* Permission Primer Modal */}
+      {/* Meal reminder time adjustment modal */}
+      <Modal
+        visible={Boolean(editingMealSlot)}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEditingMealSlot(null)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.timeModalCard}>
+            <Text variant="titleS" color="textHi" style={styles.timeModalTitle}>
+              {editingMealSlot
+                ? `${t(`settingsV1.notif${editingMealSlot.charAt(0).toUpperCase()}${editingMealSlot.slice(1)}` as Parameters<typeof t>[0])} · ${t('settingsV1.notifPickTimeTitle')}`
+                : t('settingsV1.notifPickTimeTitle')}
+            </Text>
+            <View style={styles.timeAdjustRow}>
+              <Pressable
+                onPress={() => setEditingTimeValue((v) => stepMinutes(v, -30))}
+                accessibilityRole="button"
+                accessibilityLabel="30 minutes earlier"
+                style={styles.stepCircle}
+                testID="btn-meal-time-minus"
+              >
+                <MinusIcon size={16} color={colors.textHi} />
+              </Pressable>
+              <Text variant="numM" color="textHi" tabular style={styles.timeBigValue}>
+                {format12HourTime(editingTimeValue)}
+              </Text>
+              <Pressable
+                onPress={() => setEditingTimeValue((v) => stepMinutes(v, 30))}
+                accessibilityRole="button"
+                accessibilityLabel="30 minutes later"
+                style={styles.stepCircle}
+                testID="btn-meal-time-plus"
+              >
+                <PlusIcon size={16} color={colors.textHi} />
+              </Pressable>
+            </View>
+            <View style={styles.timeModalActions}>
+              <Pressable
+                onPress={() => setEditingMealSlot(null)}
+                style={styles.timeCancelBtn}
+                accessibilityRole="button"
+              >
+                <Text variant="buttonS" color="textMid">
+                  {t('common.cancel')}
+                </Text>
+              </Pressable>
+              <PrimaryButton
+                title={t('common.save')}
+                onPress={() => void handleSaveMealTime()}
+                compact
+                testID="btn-meal-time-save"
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <NotificationPrimerModal
         visible={showPrimer}
         context="settings_manual"
-        onGranted={() => {
-          setPermissionStatus(Notifications.PermissionStatus.GRANTED);
-          showToast(t('notifications.saveSuccess'));
+        onDismiss={() => {
+          setShowPrimer(false);
+          void getNotificationPermissionStatus().then(setPermissionStatus);
         }}
-        onDismiss={() => setShowPrimer(false)}
-      />
-    </View>
-  );
-}
-
-interface SettingToggleRowProps {
-  testID: string;
-  title: string;
-  desc: string;
-  value: boolean;
-  onChange: (val: boolean) => void;
-  colors: {
-    text: string;
-    textMuted: string;
-    border: string;
-    surface: string;
-    accent: string;
-  };
-}
-
-function SettingToggleRow({ testID, title, desc, value, onChange, colors }: SettingToggleRowProps) {
-  return (
-    <View style={styles.row}>
-      <View style={styles.rowText}>
-        <Text style={[styles.rowTitle, { color: colors.text }]}>{title}</Text>
-        <Text style={[styles.rowDesc, { color: colors.textMuted }]}>{desc}</Text>
-      </View>
-      <Switch
-        testID={testID}
-        accessibilityRole="switch"
-        accessibilityLabel={title}
-        accessibilityState={{ checked: value }}
-        value={value}
-        onValueChange={onChange}
-        trackColor={{ false: colors.border, true: colors.accent }}
-        thumbColor={colors.surface}
+        onGranted={() => {
+          setShowPrimer(false);
+          setPermissionStatus(Notifications.PermissionStatus.GRANTED);
+        }}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
+    backgroundColor: colors.bg0,
   },
-  center: {
-    justifyContent: 'center',
+  centered: {
     alignItems: 'center',
-    padding: spacing.lg,
+    justifyContent: 'center',
   },
-  header: {
+  errorPad: {
+    padding: space.xl,
+    gap: space.md,
+  },
+  errorCenter: {
+    textAlign: 'center',
+  },
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingTop: Platform.OS === 'ios' ? 48 : spacing.lg,
-    paddingBottom: spacing.md,
-    borderBottomWidth: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: layout.screenPaddingX,
+    paddingBottom: space.md,
+    backgroundColor: colors.bg0,
   },
   backButton: {
-    padding: spacing.xs,
-    marginRight: spacing.sm,
+    width: 40,
+    height: 40,
+    borderRadius: radius.full,
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  headerTitleContainer: {
-    flex: 1,
+  backPressed: {
+    backgroundColor: colors.s2,
   },
   headerTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '700',
+    fontFamily: fonts.semibold,
+    fontSize: 17,
   },
-  headerSubtitle: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
+  headerSpacer: {
+    width: 40,
+    height: 40,
   },
-  toast: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 100 : 70,
+  toastPill: {
     alignSelf: 'center',
-    zIndex: 99,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    shadowColor: visualPrimitives.colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: visualPrimitives.effects[4],
-    elevation: visualPrimitives.effects[3],
-  },
-  toastText: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
+    gap: space.xs,
+    backgroundColor: colors.s2,
+    borderWidth: borders.width,
+    borderColor: colors.hairlineLit,
+    borderRadius: radius.full,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs + 1,
+    marginBottom: space.sm,
   },
   scrollContent: {
-    padding: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingHorizontal: layout.screenPaddingX,
+    paddingTop: space.xs,
   },
-  banner: {
+  innerWrap: {
+    width: '100%',
+    maxWidth: 440,
+    alignSelf: 'center',
+    gap: space.lg,
+  },
+  groupStack: {
+    gap: space.lg,
+  },
+  dimmedGroup: {
+    opacity: 0.48,
+  },
+  sectionBlock: {
+    gap: space.xs + 2,
+  },
+  eyebrow: {
+    paddingHorizontal: 2,
+  },
+  cardBox: {
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.card,
+    overflow: 'hidden',
+  },
+  bannerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    marginBottom: spacing.md,
-    gap: spacing.sm,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+    gap: space.md,
   },
-  bannerText: {
-    flex: 1,
+  bannerIconTile: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.chip,
+    backgroundColor: colors.s2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  bannerTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
-  bannerSubtitle: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
-  },
-  sectionHeader: {
-    marginTop: spacing.lg,
-    marginBottom: spacing.xs,
-    paddingHorizontal: spacing.xs,
-  },
-  sectionTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
-  },
-  card: {
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+  rowPressed: {
+    backgroundColor: colors.s2,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: spacing.sm,
-    minHeight: 52,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md + 2,
+    minHeight: 58,
+    gap: space.md,
+  },
+  rowDivider: {
+    borderBottomWidth: borders.width,
+    borderBottomColor: colors.hairline,
+  },
+  rowDividerTop: {
+    borderTopWidth: borders.width,
+    borderTopColor: colors.hairline,
   },
   rowText: {
     flex: 1,
-    paddingRight: spacing.md,
+    gap: 2,
   },
-  rowTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '500',
+  rowTitleText: {
+    fontFamily: fonts.semibold,
+    fontSize: 15,
   },
-  rowDesc: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  divider: {
-    height: 1,
-    width: '100%',
-  },
-  timeInputsRow: {
+  mealRightCluster: {
     flexDirection: 'row',
-    gap: spacing.md,
-    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    gap: space.sm + 2,
   },
-  timeInputCol: {
+  timePill: {
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs + 2,
+    borderRadius: radius.full,
+    backgroundColor: colors.s2,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    minHeight: 32,
+    justifyContent: 'center',
+  },
+  timePillPressed: {
+    backgroundColor: colors.s3,
+  },
+  hydrationCard: {
+    paddingBottom: space.md,
+  },
+  intervalRow: {
+    flexDirection: 'row',
+    gap: space.sm,
+    paddingHorizontal: space.lg,
+    paddingTop: space.xs,
+  },
+  intervalChip: {
     flex: 1,
+    justifyContent: 'center',
   },
-  inputLabel: {
-    fontSize: fontSize.xs,
-    marginBottom: spacing.xs,
-  },
-  timeInput: {
-    height: 40,
-    borderWidth: 1,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.sm,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  quietBadge: {
+  moreToggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    padding: spacing.sm,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    marginBottom: spacing.sm,
+    justifyContent: 'center',
+    gap: space.xs,
+    paddingVertical: space.sm,
+    minHeight: layout.minTouchTarget,
   },
-  quietBadgeText: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
+  quietInputsRow: {
+    flexDirection: 'row',
+    gap: space.md,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
   },
-  inlineLoading: {
-    paddingVertical: spacing.md,
+  quietCol: {
+    flex: 1,
+    gap: space.xs,
+  },
+  quietInput: {
+    height: 44,
+    borderRadius: radius.control,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    backgroundColor: colors.s2,
+    color: colors.textHi,
+    fontFamily: fonts.semibold,
+    fontSize: 15,
+    paddingHorizontal: space.md,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: colors.scrim,
+    justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: layout.screenPaddingX,
   },
-  emptyRooms: {
-    paddingVertical: spacing.md,
-    alignItems: 'center',
+  timeModalCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairlineLit,
+    borderRadius: radius.card,
+    padding: space.xl,
+    gap: space.lg,
   },
-  emptyRoomsText: {
-    fontSize: fontSize.sm,
-  },
-  statusText: {
-    fontSize: fontSize.sm,
-    marginTop: spacing.sm,
+  timeModalTitle: {
+    fontFamily: fonts.semibold,
+    fontSize: 16,
     textAlign: 'center',
   },
-  errorTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-    marginTop: spacing.sm,
+  timeAdjustRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: space.sm,
   },
-  primaryButton: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.md,
+  stepCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.full,
+    backgroundColor: colors.s2,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  primaryButtonText: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
+  timeBigValue: {
+    fontFamily: fonts.display,
+    fontSize: 28,
+    lineHeight: 34,
+  },
+  timeModalActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: space.md,
+  },
+  timeCancelBtn: {
+    minHeight: 44,
+    paddingHorizontal: space.md,
+    justifyContent: 'center',
   },
 });

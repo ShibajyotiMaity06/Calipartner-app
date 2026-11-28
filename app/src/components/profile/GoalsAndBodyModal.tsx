@@ -1,14 +1,31 @@
-import { useTheme as useAppearance } from '@calipartner/ui/theme';
-import { NavigationIcon } from '@calipartner/ui';
-import { type as inputTypography } from '@calipartner/ui';
-import React, { useState } from 'react';
-import { Modal, SafeAreaView, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { Button, Card, radius, SegmentedControl, space, Text } from '@calipartner/ui';
-import { cmToFtIn, ftInToCm, kgToLb, lbToKg } from '@calipartner/core';
-import { NumberField } from '@/components/onboarding/PlanPrimitives';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  calculateAge,
+  calculateTargets,
+  getWeeklyRateCap,
+  kgToLb,
+  lbToKg,
+  type ActivityLevel,
+  type Goal,
+  type Sex,
+} from '@calipartner/core';
+import {
+  ChevronLeftIcon,
+  PrimaryButton,
+  Segmented,
+  Text,
+  borders,
+  colors,
+  fonts,
+  layout,
+  radius,
+  space,
+} from '@calipartner/ui/v1';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
-import type { SelectedGoal } from '@/services/onboardingStateMachine';
+import { TrackSlider } from './TrackSlider';
 
 export interface GoalsAndBodyModalProps {
   visible: boolean;
@@ -17,15 +34,42 @@ export interface GoalsAndBodyModalProps {
   currentRate?: number;
   currentHeightCm?: number;
   currentWeightKg?: number;
+  currentTargetWeightKg?: number;
+  currentDateOfBirth?: string;
+  currentActivityLevel?: ActivityLevel;
   currentSex?: 'male' | 'female' | 'other';
+  units?: 'metric' | 'imperial';
   onSave?: (data: {
-    goal: SelectedGoal;
+    goal: 'cut' | 'bulk';
     rate: number;
     heightCm: number;
     weightKg: number;
-    sex: 'male' | 'female' | 'other';
+    targetWeightKg?: number | null;
+    sex: Sex;
+    dateOfBirth?: string;
   }) => Promise<void> | void;
   testID?: string;
+}
+
+function formatReadableDob(isoDob: string): string {
+  const d = new Date(`${isoDob}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return isoDob;
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(d);
+}
+
+function formatProjectedShortDate(weeksRemaining: number): string {
+  const days = Math.max(7, Math.round(weeksRemaining * 7));
+  const future = new Date(Date.now() + days * 86_400_000);
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(future);
+}
+
+function roundOne(val: number): string {
+  return String(Math.round(val * 10) / 10);
 }
 
 export function GoalsAndBodyModal({
@@ -35,420 +79,564 @@ export function GoalsAndBodyModal({
   currentRate = 0.5,
   currentHeightCm = 175,
   currentWeightKg = 72,
+  currentTargetWeightKg,
+  currentDateOfBirth = '1999-03-12',
+  currentActivityLevel = 'light',
   currentSex = 'male',
+  units = 'metric',
   onSave,
   testID = 'modal-goals-and-body',
 }: GoalsAndBodyModalProps) {
-  const { colors: dark } = useAppearance();
-  const styles = createStyles(dark);
+  const insets = useSafeAreaInsets();
+  const isImperial = units === 'imperial';
 
-  const [goal, setGoal] = useState<SelectedGoal | null>(
-    currentGoal === 'maintain' ? null : currentGoal,
+  const [goal, setGoal] = useState<'cut' | 'bulk'>(currentGoal === 'bulk' ? 'bulk' : 'cut');
+  const [rateKg, setRateKg] = useState<number>(currentRate > 0 ? currentRate : 0.5);
+  const [weightDisplay, setWeightDisplay] = useState<string>(
+    roundOne(isImperial ? kgToLb(currentWeightKg) : currentWeightKg),
   );
-  const [rate, setRate] = useState<number>(currentRate);
-  const [unitSystem, setUnitSystem] = useState<'metric' | 'imperial'>('metric');
-  const [heightCm, setHeightCm] = useState<string>(String(currentHeightCm));
-  const [weightKg, setWeightKg] = useState<string>(String(currentWeightKg));
-  const initialFtIn = cmToFtIn(currentHeightCm);
-  const [feetStr, setFeetStr] = useState<string>(String(initialFtIn.feet));
-  const [inchesStr, setInchesStr] = useState<string>(String(initialFtIn.inches));
-  const [weightLbStr, setWeightLbStr] = useState<string>(
-    String(Math.round(kgToLb(currentWeightKg) * 10) / 10),
+  const [targetDisplay, setTargetDisplay] = useState<string>(
+    currentTargetWeightKg != null
+      ? roundOne(isImperial ? kgToLb(currentTargetWeightKg) : currentTargetWeightKg)
+      : roundOne(
+          isImperial
+            ? kgToLb(Math.max(40, currentWeightKg - 5))
+            : Math.max(40, currentWeightKg - 5),
+        ),
   );
-  const [sex, setSex] = useState<'male' | 'female' | 'other'>(currentSex);
+  const [heightCmStr, setHeightCmStr] = useState<string>(String(Math.round(currentHeightCm)));
+  const [sex, setSex] = useState<Sex>(currentSex);
+  const [dobStr, setDobStr] = useState<string>(currentDateOfBirth || '1999-03-12');
+  const [editingDob, setEditingDob] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [saveError, setSaveError] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  const goalOptions = [
-    { value: 'bulk', label: t('socialUpdate.bulk') },
-    { value: 'cut', label: t('socialUpdate.cut') },
-  ];
+  useEffect(() => {
+    if (visible) {
+      setGoal(currentGoal === 'bulk' ? 'bulk' : 'cut');
+      setRateKg(currentRate > 0 ? currentRate : 0.5);
+      setWeightDisplay(roundOne(isImperial ? kgToLb(currentWeightKg) : currentWeightKg));
+      const defaultTarget =
+        currentTargetWeightKg ??
+        (currentGoal === 'bulk' ? currentWeightKg + 4 : Math.max(40, currentWeightKg - 5));
+      setTargetDisplay(roundOne(isImperial ? kgToLb(defaultTarget) : defaultTarget));
+      setHeightCmStr(String(Math.round(currentHeightCm)));
+      setSex(currentSex);
+      setDobStr(currentDateOfBirth || '1999-03-12');
+      setEditingDob(false);
+      setSaveError(null);
+    }
+  }, [
+    visible,
+    currentGoal,
+    currentRate,
+    currentWeightKg,
+    currentTargetWeightKg,
+    currentHeightCm,
+    currentSex,
+    currentDateOfBirth,
+    isImperial,
+  ]);
 
-  const rateOptions = [
-    { value: '0.25', label: '0.25 kg/wk' },
-    { value: '0.50', label: '0.50 kg/wk' },
-    { value: '0.75', label: '0.75 kg/wk' },
-    { value: '1.00', label: '1.00 kg/wk' },
-  ];
+  const weightKg = useMemo(() => {
+    const num = parseFloat(weightDisplay);
+    if (!Number.isFinite(num) || num <= 0) return currentWeightKg;
+    return Math.max(30, Math.min(350, isImperial ? lbToKg(num) : num));
+  }, [weightDisplay, isImperial, currentWeightKg]);
+
+  const targetWeightKg = useMemo(() => {
+    const num = parseFloat(targetDisplay);
+    if (!Number.isFinite(num) || num <= 0) return null;
+    return Math.max(30, Math.min(350, isImperial ? lbToKg(num) : num));
+  }, [targetDisplay, isImperial]);
+
+  const heightCm = useMemo(() => {
+    const num = parseFloat(heightCmStr);
+    if (!Number.isFinite(num) || num < 100 || num > 250) return currentHeightCm;
+    return Math.round(num);
+  }, [heightCmStr, currentHeightCm]);
+
+  const ageYears = useMemo(() => {
+    try {
+      return calculateAge(dobStr);
+    } catch {
+      return 27;
+    }
+  }, [dobStr]);
+
+  const maxPaceKg = useMemo(() => {
+    const cap = getWeeklyRateCap(weightKg, goal);
+    return goal === 'cut' ? Math.min(1.0, Math.max(0.4, cap)) : Math.min(0.75, Math.max(0.4, cap));
+  }, [weightKg, goal]);
+
+  const safeRateKg = Math.max(0.1, Math.min(maxPaceKg, rateKg));
+
+  const previewResult = useMemo(() => {
+    try {
+      return calculateTargets({
+        sex,
+        age: ageYears,
+        heightCm,
+        weightKg,
+        activityLevel: currentActivityLevel,
+        goal: goal as Goal,
+        weeklyRateKg: safeRateKg,
+      });
+    } catch {
+      return null;
+    }
+  }, [sex, ageYears, heightCm, weightKg, currentActivityLevel, goal, safeRateKg]);
+
+  const projectionLine = useMemo(() => {
+    if (!previewResult) return '';
+    const kcal = Math.round(previewResult.targetKcal).toLocaleString('en-US');
+    if (
+      targetWeightKg != null &&
+      safeRateKg > 0 &&
+      ((goal === 'cut' && targetWeightKg < weightKg) ||
+        (goal === 'bulk' && targetWeightKg > weightKg))
+    ) {
+      const weeks = Math.abs(weightKg - targetWeightKg) / safeRateKg;
+      const targetOut = isImperial
+        ? Math.round(kgToLb(targetWeightKg))
+        : Math.round(targetWeightKg);
+      const unitLabel = isImperial ? 'lb' : 'kg';
+      return t('settingsV1.goalsPreviewReach', {
+        kcal,
+        target: targetOut,
+        unit: unitLabel,
+        date: formatProjectedShortDate(weeks),
+      });
+    }
+    return t('settingsV1.goalsPreviewKcal', { kcal });
+  }, [previewResult, targetWeightKg, safeRateKg, goal, weightKg, isImperial]);
+
+  const paceLabel =
+    safeRateKg <= maxPaceKg * 0.38 ? 'gentle' : safeRateKg >= maxPaceKg * 0.72 ? 'fast' : 'steady';
+
+  const paceDisplayValue = isImperial
+    ? Math.round(kgToLb(safeRateKg) * 10) / 10
+    : Math.round(safeRateKg * 10) / 10;
+  const pacePrefix = goal === 'cut' ? '-' : '+';
+  const weightUnit = isImperial ? 'lb' : 'kg';
 
   const handleSave = async () => {
-    if (!goal || saving) return;
+    if (saving) return;
     playClickSound();
-    setSaveError(false);
+    setSaveError(null);
+    const parsedW = parseFloat(weightDisplay);
+    const parsedH = parseFloat(heightCmStr);
+    if (!Number.isFinite(parsedW) || parsedW <= 0 || !Number.isFinite(parsedH) || parsedH < 100) {
+      setSaveError(t('setup.detailsError'));
+      return;
+    }
     setSaving(true);
     try {
-      const parsedHeight = parseFloat(heightCm);
-      const parsedWeight = parseFloat(weightKg);
       if (onSave) {
         await onSave({
           goal,
-          rate,
-          heightCm: parsedHeight,
-          weightKg: parsedWeight,
+          rate: Math.round(safeRateKg * 100) / 100,
+          heightCm: Math.round(parsedH),
+          weightKg: Math.round(weightKg * 10) / 10,
+          targetWeightKg: targetWeightKg != null ? Math.round(targetWeightKg * 10) / 10 : null,
           sex,
+          dateOfBirth: /^\d{4}-\d{2}-\d{2}$/.test(dobStr.trim()) ? dobStr.trim() : undefined,
         });
       }
-      setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        setSaving(false);
-        onClose();
-      }, 600);
+      onClose();
     } catch {
-      setSaveError(true);
+      setSaveError(t('setup.detailsError'));
+    } finally {
       setSaving(false);
     }
   };
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container} testID={testID}>
-          {/* Top Bar */}
-          <View style={styles.topBar}>
-            <Button
-              variant="tertiary"
-              fullWidth={false}
-              label="Back to Me"
-              iconOnly
-              icon={<NavigationIcon action="back" />}
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel="Back to Me"
-              style={styles.backButton}
-              testID="btn-close-goals-body"
-            />
-            <Text variant="heading" color={dark.textHi}>
-              {t('me.goalsAndBody.title')}
-            </Text>
-            <View style={styles.backButtonPlaceholder} />
-          </View>
-
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
+      <View style={styles.root} testID={testID}>
+        <View style={[styles.topBar, { paddingTop: Math.max(space.sm, insets.top + 6) }]}>
+          <Pressable
+            onPress={onClose}
+            hitSlop={6}
+            accessibilityRole="button"
+            accessibilityLabel={t('squadDesign.back')}
+            style={({ pressed }) => [styles.backButton, pressed ? styles.backPressed : null]}
+            testID="btn-close-goals-body"
           >
-            {/* Notice: changes apply from today */}
-            <Card elevation="s2" style={styles.noticeCard}>
-              <Text variant="bodyS" color={dark.textMid}>
-                {t('me.goalsAndBody.subtitle')}
-              </Text>
-            </Card>
+            <ChevronLeftIcon size={18} color={colors.textHi} />
+          </Pressable>
+          <Text
+            variant="titleS"
+            color="textHi"
+            accessibilityRole="header"
+            style={styles.headerTitle}
+          >
+            {t('settingsV1.goalsTitle')}
+          </Text>
+          <View style={styles.headerSpacer} />
+        </View>
 
-            {/* Goal selector */}
-            <View style={styles.section}>
-              <Text variant="label" color={dark.textHi} style={styles.sectionLabel}>
-                {t('me.goalsAndBody.goalLabel')}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: space.xl }]}
+        >
+          <View style={styles.innerWrap}>
+            {/* GOAL */}
+            <View style={styles.fieldGroup}>
+              <Text variant="eyebrow" color="textLo" style={styles.eyebrow}>
+                {t('settingsV1.goalsEyebrow')}
               </Text>
-              <SegmentedControl
-                options={goalOptions}
-                value={goal ?? ''}
-                onChange={(value) => {
-                  if (value === 'bulk' || value === 'cut') {
-                    setGoal(value);
-                    if (rate === 0) setRate(0.5);
-                  }
-                }}
+              <Segmented
+                options={[
+                  { value: 'cut', label: t('settingsV1.goalsLoseFat'), testID: 'goal-cut-tab' },
+                  {
+                    value: 'bulk',
+                    label: t('settingsV1.goalsBuildMuscle'),
+                    testID: 'goal-bulk-tab',
+                  },
+                ]}
+                value={goal}
+                onChange={(v) => setGoal(v as 'cut' | 'bulk')}
                 testID="segment-goal-type"
               />
             </View>
 
-            {/* Rate selector if cut or bulk */}
-            {goal && (
-              <View style={styles.section}>
-                <Text variant="label" color={dark.textHi} style={styles.sectionLabel}>
-                  {t('me.goalsAndBody.rateLabel')}
+            {/* Current weight + Target weight */}
+            <View style={styles.twoColRow}>
+              <View style={styles.colItem}>
+                <Text variant="meta" color="textLo" style={styles.inputLabel}>
+                  {t('settingsV1.goalsCurrentWeight')}
                 </Text>
-                <SegmentedControl
-                  options={rateOptions}
-                  value={rate.toFixed(2)}
-                  onChange={(val: string) => setRate(parseFloat(val))}
-                  testID="segment-rate-pace"
-                />
-                <NumberField
-                  label={t('fixes.customPace')}
-                  value={rate}
-                  onChange={(value) => setRate(value ?? NaN)}
-                  testID="input-profile-custom-pace"
-                />
-                <Text variant="micro" color={dark.textLo} style={styles.helperText}>
-                  {t('fixes.advisory')}
-                </Text>
-              </View>
-            )}
-
-            {/* Measurements */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeaderRow}>
-                <Text variant="label" color={dark.textHi}>
-                  Body measurements
-                </Text>
+                <View style={styles.fieldBox}>
+                  <TextInput
+                    value={weightDisplay}
+                    onChangeText={setWeightDisplay}
+                    keyboardType="decimal-pad"
+                    style={styles.numTextInput}
+                    placeholder="73.5"
+                    placeholderTextColor={colors.textOff}
+                    testID="input-weight-kg"
+                    accessibilityLabel={t('settingsV1.goalsCurrentWeight')}
+                  />
+                  <Text variant="meta" color="textLo">
+                    {weightUnit}
+                  </Text>
+                </View>
               </View>
 
-              <View style={styles.unitToggleWrap}>
-                <SegmentedControl
-                  options={[
-                    { value: 'metric', label: 'Metric (cm, kg)' },
-                    { value: 'imperial', label: 'Imperial (ft, lb)' },
-                  ]}
-                  value={unitSystem}
-                  onChange={(val: string) => {
-                    const next = val as 'metric' | 'imperial';
-                    setUnitSystem(next);
-                    if (next === 'imperial') {
-                      const h = parseFloat(heightCm) || 0;
-                      const w = parseFloat(weightKg) || 0;
-                      const ftIn = cmToFtIn(h);
-                      setFeetStr(String(ftIn.feet));
-                      setInchesStr(String(ftIn.inches));
-                      setWeightLbStr(String(Math.round(kgToLb(w) * 10) / 10));
-                    } else {
-                      const ft = parseFloat(feetStr) || 0;
-                      const inch = parseFloat(inchesStr) || 0;
-                      const lb = parseFloat(weightLbStr) || 0;
-                      if (ft || inch) setHeightCm(String(Math.round(ftInToCm(ft, inch))));
-                      if (lb) setWeightKg(String(Math.round(lbToKg(lb) * 10) / 10));
-                    }
-                  }}
-                  testID="segment-measurements-unit"
-                />
-              </View>
-
-              <View style={styles.inputRow}>
-                {unitSystem === 'metric' ? (
-                  <>
-                    <View style={styles.inputCol}>
-                      <Text variant="micro" color={dark.textMid} style={styles.inputLabel}>
-                        Height (cm)
-                      </Text>
-                      <TextInput
-                        value={heightCm}
-                        onChangeText={setHeightCm}
-                        keyboardType="numeric"
-                        style={[styles.textInput, { fontFamily: inputTypography.body.fontFamily }]}
-                        placeholder="175"
-                        placeholderTextColor={dark.textOff}
-                        testID="input-height"
-                        accessibilityLabel="Height in centimetres"
-                      />
-                    </View>
-                    <View style={styles.inputCol}>
-                      <Text variant="micro" color={dark.textMid} style={styles.inputLabel}>
-                        Weight (kg)
-                      </Text>
-                      <TextInput
-                        value={weightKg}
-                        onChangeText={setWeightKg}
-                        keyboardType="numeric"
-                        style={[styles.textInput, { fontFamily: inputTypography.body.fontFamily }]}
-                        placeholder="70"
-                        placeholderTextColor={dark.textOff}
-                        testID="input-weight-kg"
-                        accessibilityLabel="Weight in kilograms"
-                      />
-                    </View>
-                  </>
-                ) : (
-                  <>
-                    <View style={styles.inputCol}>
-                      <Text variant="micro" color={dark.textMid} style={styles.inputLabel}>
-                        Height (ft / in)
-                      </Text>
-                      <View style={styles.ftInRow}>
-                        <TextInput
-                          value={feetStr}
-                          onChangeText={(val) => {
-                            setFeetStr(val);
-                            const ft = parseFloat(val) || 0;
-                            const inch = parseFloat(inchesStr) || 0;
-                            setHeightCm(String(Math.round(ftInToCm(ft, inch))));
-                          }}
-                          keyboardType="numeric"
-                          style={[
-                            styles.textInput,
-                            styles.halfInput,
-                            { fontFamily: inputTypography.body.fontFamily },
-                          ]}
-                          placeholder="ft"
-                          placeholderTextColor={dark.textOff}
-                          testID="input-height-ft"
-                          accessibilityLabel="Height in feet"
-                        />
-                        <TextInput
-                          value={inchesStr}
-                          onChangeText={(val) => {
-                            setInchesStr(val);
-                            const ft = parseFloat(feetStr) || 0;
-                            const inch = parseFloat(val) || 0;
-                            setHeightCm(String(Math.round(ftInToCm(ft, inch))));
-                          }}
-                          keyboardType="numeric"
-                          style={[
-                            styles.textInput,
-                            styles.halfInput,
-                            { fontFamily: inputTypography.body.fontFamily },
-                          ]}
-                          placeholder="in"
-                          placeholderTextColor={dark.textOff}
-                          testID="input-height-in"
-                          accessibilityLabel="Height in inches"
-                        />
-                      </View>
-                    </View>
-                    <View style={styles.inputCol}>
-                      <Text variant="micro" color={dark.textMid} style={styles.inputLabel}>
-                        Weight (lb)
-                      </Text>
-                      <TextInput
-                        value={weightLbStr}
-                        onChangeText={(val) => {
-                          setWeightLbStr(val);
-                          const lb = parseFloat(val) || 0;
-                          setWeightKg(String(Math.round(lbToKg(lb) * 10) / 10));
-                        }}
-                        keyboardType="numeric"
-                        style={[styles.textInput, { fontFamily: inputTypography.body.fontFamily }]}
-                        placeholder="154"
-                        placeholderTextColor={dark.textOff}
-                        testID="input-weight-kg"
-                        accessibilityLabel="Weight in pounds"
-                      />
-                    </View>
-                  </>
-                )}
+              <View style={styles.colItem}>
+                <Text variant="meta" color="textLo" style={styles.inputLabel}>
+                  {t('settingsV1.goalsTargetWeight')}
+                </Text>
+                <View style={styles.fieldBox}>
+                  <TextInput
+                    value={targetDisplay}
+                    onChangeText={setTargetDisplay}
+                    keyboardType="decimal-pad"
+                    style={styles.numTextInput}
+                    placeholder="68.0"
+                    placeholderTextColor={colors.textOff}
+                    testID="input-target-weight"
+                    accessibilityLabel={t('settingsV1.goalsTargetWeight')}
+                  />
+                  <Text variant="meta" color="textLo">
+                    {weightUnit}
+                  </Text>
+                </View>
               </View>
             </View>
 
-            {/* Sex / Biology */}
-            <View style={styles.section}>
-              <Text variant="label" color={dark.textHi} style={styles.sectionLabel}>
-                Biological Sex (for metabolic rate)
-              </Text>
-              <SegmentedControl
-                options={[
-                  { value: 'male', label: 'Male' },
-                  { value: 'female', label: 'Female' },
-                  { value: 'other', label: 'Other' },
-                ]}
-                value={sex}
-                onChange={(val: string) => setSex(val as 'male' | 'female' | 'other')}
-                testID="segment-biological-sex"
+            {/* Weekly pace slider card */}
+            <View style={styles.paceCard}>
+              <View style={styles.paceTopRow}>
+                <Text variant="label" color="textHi" style={styles.paceTitle}>
+                  {t('settingsV1.goalsWeeklyPace')}
+                </Text>
+                <Text variant="numS" color="textHi" tabular testID="weekly-pace-display">
+                  {`${pacePrefix}${paceDisplayValue} ${weightUnit}`}
+                </Text>
+              </View>
+
+              <TrackSlider
+                value={safeRateKg}
+                min={0.1}
+                max={maxPaceKg}
+                step={0.05}
+                onChange={setRateKg}
+                accessibilityLabel={t('settingsV1.goalsWeeklyPace')}
+                testID="slider-weekly-pace"
               />
-            </View>
-          </ScrollView>
 
-          {saveError ? (
-            <Text accessibilityRole="alert" color={dark.danger}>
-              {t('setup.detailsError')}
+              <View style={styles.paceLabelsRow}>
+                <Text
+                  variant="micro"
+                  color={paceLabel === 'gentle' ? 'textHi' : 'textLo'}
+                  style={paceLabel === 'gentle' ? styles.activePaceLabel : undefined}
+                >
+                  {t('settingsV1.goalsGentle')}
+                </Text>
+                <Text
+                  variant="micro"
+                  color={paceLabel === 'steady' ? 'textHi' : 'textLo'}
+                  style={paceLabel === 'steady' ? styles.activePaceLabel : undefined}
+                >
+                  {t('settingsV1.goalsSteady')}
+                </Text>
+                <Text
+                  variant="micro"
+                  color={paceLabel === 'fast' ? 'textHi' : 'textLo'}
+                  style={paceLabel === 'fast' ? styles.activePaceLabel : undefined}
+                >
+                  {t('settingsV1.goalsFast')}
+                </Text>
+              </View>
+
+              {projectionLine ? (
+                <Text variant="meta" color="textLo" tabular>
+                  {projectionLine}
+                </Text>
+              ) : null}
+            </View>
+
+            {/* Height + Sex */}
+            <View style={styles.twoColRow}>
+              <View style={styles.colItem}>
+                <Text variant="meta" color="textLo" style={styles.inputLabel}>
+                  {t('settingsV1.goalsHeight')}
+                </Text>
+                <View style={styles.fieldBox}>
+                  <TextInput
+                    value={heightCmStr}
+                    onChangeText={setHeightCmStr}
+                    keyboardType="numeric"
+                    style={styles.numTextInput}
+                    placeholder="178"
+                    placeholderTextColor={colors.textOff}
+                    testID="input-height"
+                    accessibilityLabel={t('settingsV1.goalsHeight')}
+                  />
+                  <Text variant="meta" color="textLo">
+                    cm
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.colItem}>
+                <Text variant="meta" color="textLo" style={styles.inputLabel}>
+                  {t('settingsV1.goalsSex')}
+                </Text>
+                <Segmented
+                  options={[
+                    { value: 'female', label: t('settingsV1.goalsFemale'), testID: 'sex-female' },
+                    { value: 'male', label: t('settingsV1.goalsMale'), testID: 'sex-male' },
+                  ]}
+                  value={sex === 'female' ? 'female' : 'male'}
+                  onChange={(v) => setSex(v as Sex)}
+                  testID="segment-biological-sex"
+                />
+              </View>
+            </View>
+
+            {/* Birthday */}
+            <View style={styles.fieldGroup}>
+              <Text variant="meta" color="textLo" style={styles.inputLabel}>
+                {t('settingsV1.goalsBirthday')}
+              </Text>
+              <Pressable
+                onPress={() => setEditingDob((v) => !v)}
+                accessibilityRole="button"
+                accessibilityLabel={`${t('settingsV1.goalsBirthday')}: ${formatReadableDob(dobStr)}`}
+                style={styles.birthdayCard}
+                testID="btn-edit-birthday"
+              >
+                {editingDob ? (
+                  <TextInput
+                    value={dobStr}
+                    onChangeText={setDobStr}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor={colors.textOff}
+                    style={styles.dobInput}
+                    autoFocus
+                    onBlur={() => setEditingDob(false)}
+                    testID="input-birthday"
+                  />
+                ) : (
+                  <Text variant="label" color="textHi" style={styles.dobDisplay}>
+                    {formatReadableDob(dobStr)}
+                  </Text>
+                )}
+                <Text variant="meta" color="textLo" tabular>
+                  {t('settingsV1.goalsYearsShort', { years: ageYears })}
+                </Text>
+              </Pressable>
+            </View>
+
+            <Text variant="micro" color="textLo" style={styles.historyNote}>
+              {t('settingsV1.goalsHistoryNote')}
             </Text>
-          ) : null}
-          {/* Bottom Save Action */}
-          <View style={styles.bottomBar}>
-            <Button
-              variant="primary"
-              label={success ? 'Saved' : saving ? 'Saving…' : t('me.goalsAndBody.saveBtn')}
-              onPress={handleSave}
-              disabled={saving || !goal}
+
+            {saveError ? (
+              <Text variant="meta" color="danger" accessibilityRole="alert">
+                {saveError}
+              </Text>
+            ) : null}
+          </View>
+        </ScrollView>
+
+        <View
+          style={[
+            styles.bottomBar,
+            { paddingBottom: Math.max(space.lg, insets.bottom + space.md) },
+          ]}
+        >
+          <View style={styles.innerWrap}>
+            <PrimaryButton
+              title={saving ? t('common.saving') : t('settingsV1.goalsSave')}
+              loading={saving}
+              disabled={saving}
+              onPress={() => void handleSave()}
               testID="btn-save-goals-body"
-              style={styles.saveButton}
             />
           </View>
         </View>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
 
-const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
-  StyleSheet.create({
-    safeArea: {
-      flex: 1,
-      backgroundColor: dark.bg0,
-    },
-    container: {
-      flex: 1,
-      backgroundColor: dark.bg0,
-    },
-    topBar: {
-      height: 56,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: space[4],
-      borderBottomWidth: 1,
-      borderBottomColor: dark.hairline,
-    },
-    backButton: {
-      width: 44,
-      height: 44,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    backButtonPlaceholder: {
-      width: 44,
-    },
-    scrollContent: {
-      padding: space[4],
-      paddingBottom: space[8],
-    },
-    noticeCard: {
-      padding: space[3],
-      marginBottom: space[5],
-    },
-    section: {
-      marginBottom: space[6],
-    },
-    sectionLabel: {
-      marginBottom: space[2],
-    },
-    helperText: {
-      marginTop: space[2],
-    },
-    sectionHeaderRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: space[2],
-    },
-    unitToggleWrap: {
-      marginBottom: space[3],
-    },
-    ftInRow: {
-      flexDirection: 'row',
-      gap: space[2],
-    },
-    halfInput: {
-      flex: 1,
-    },
-    inputRow: {
-      flexDirection: 'row',
-      gap: space[3],
-    },
-    inputCol: {
-      flex: 1,
-    },
-    inputLabel: {
-      marginBottom: space[1],
-    },
-    textInput: {
-      backgroundColor: dark.s2,
-      borderColor: dark.hairline,
-      borderWidth: 1,
-      borderRadius: radius.control,
-      height: 48,
-      paddingHorizontal: space[3],
-      color: dark.textHi,
-      fontSize: 16,
-      fontVariant: ['tabular-nums'],
-    },
-    bottomBar: {
-      padding: space[4],
-      borderTopWidth: 1,
-      borderTopColor: dark.hairline,
-      backgroundColor: dark.bg0,
-    },
-    saveButton: {
-      width: '100%',
-    },
-  });
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: colors.bg0,
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: layout.screenPaddingX,
+    paddingBottom: space.md,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.full,
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backPressed: {
+    backgroundColor: colors.s2,
+  },
+  headerTitle: {
+    fontFamily: fonts.semibold,
+    fontSize: 17,
+  },
+  headerSpacer: {
+    width: 40,
+    height: 40,
+  },
+  scrollContent: {
+    paddingHorizontal: layout.screenPaddingX,
+    paddingTop: space.xs,
+  },
+  innerWrap: {
+    width: '100%',
+    maxWidth: 440,
+    alignSelf: 'center',
+    gap: space.md,
+  },
+  fieldGroup: {
+    gap: space.xs + 2,
+  },
+  eyebrow: {
+    paddingHorizontal: 2,
+  },
+  twoColRow: {
+    flexDirection: 'row',
+    gap: space.md,
+  },
+  colItem: {
+    flex: 1,
+    gap: space.xs + 1,
+  },
+  inputLabel: {
+    paddingHorizontal: 2,
+  },
+  fieldBox: {
+    height: 50,
+    borderRadius: radius.input,
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    paddingHorizontal: space.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.sm,
+  },
+  numTextInput: {
+    flex: 1,
+    fontFamily: fonts.semibold,
+    fontSize: 16,
+    color: colors.textHi,
+    fontVariant: ['tabular-nums'],
+    paddingVertical: 0,
+  },
+  paceCard: {
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.card,
+    padding: space.lg,
+    gap: space.sm,
+  },
+  paceTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  paceTitle: {
+    fontFamily: fonts.semibold,
+    fontSize: 15,
+  },
+  paceLabelsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  activePaceLabel: {
+    fontFamily: fonts.bold,
+  },
+  birthdayCard: {
+    height: 52,
+    borderRadius: radius.input,
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    paddingHorizontal: space.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  dobDisplay: {
+    fontFamily: fonts.semibold,
+    fontSize: 15,
+  },
+  dobInput: {
+    flex: 1,
+    fontFamily: fonts.semibold,
+    fontSize: 15,
+    color: colors.textHi,
+    paddingVertical: 0,
+  },
+  historyNote: {
+    lineHeight: 18,
+  },
+  bottomBar: {
+    paddingHorizontal: layout.screenPaddingX,
+    paddingTop: space.md,
+    backgroundColor: colors.bg0,
+  },
+});

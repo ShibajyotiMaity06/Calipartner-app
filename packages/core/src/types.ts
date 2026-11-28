@@ -412,6 +412,7 @@ export interface SavedMeal {
   total_protein: number;
   total_carbs: number;
   total_fat: number;
+  default_meal_section?: MealSection | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;

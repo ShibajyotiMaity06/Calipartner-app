@@ -25,7 +25,6 @@ import {
   PlusIcon,
   PrimaryButton,
   Ring,
-  SettingsIcon,
   SunIcon,
   Text,
   borders,
@@ -99,7 +98,6 @@ export interface TodayHeaderV1Props {
   onUpgradePress: () => void;
   onCoinPress: () => void;
   onProfilePress: () => void;
-  onSettingsPress?: () => void;
 }
 
 export function TodayHeaderV1({
@@ -110,7 +108,6 @@ export function TodayHeaderV1({
   onUpgradePress,
   onCoinPress,
   onProfilePress,
-  onSettingsPress,
 }: TodayHeaderV1Props): React.JSX.Element {
   const cleanInitial = (userName.trim().slice(0, 1) || 'P').toUpperCase();
 
@@ -169,17 +166,6 @@ export function TodayHeaderV1({
               </Text>
             </Pressable>
           ) : null}
-
-          <Pressable
-            onPress={onSettingsPress ?? onProfilePress}
-            hitSlop={4}
-            accessibilityRole="button"
-            accessibilityLabel={t('settingsV1.openSettings')}
-            style={({ pressed }) => [styles.settingsButton, pressed ? styles.pressedTile : null]}
-            testID="today-settings-button"
-          >
-            <SettingsIcon size={18} color={colors.textHi} />
-          </Pressable>
 
           <Pressable
             onPress={onProfilePress}
@@ -1166,16 +1152,6 @@ const styles = StyleSheet.create({
   },
   coinText: {
     fontSize: 13,
-  },
-  settingsButton: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.full,
-    backgroundColor: colors.s1,
-    borderWidth: borders.width,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   profileButton: {
     width: 38,

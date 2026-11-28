@@ -4,7 +4,12 @@ import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { kgToLb, TRACKING_METRICS, type TrackingPreferences } from '@calipartner/core';
+import {
+  getCalorieFloor,
+  kgToLb,
+  TRACKING_METRICS,
+  type TrackingPreferences,
+} from '@calipartner/core';
 import { getTabBarHeight } from '@calipartner/ui';
 import {
   Badge,
@@ -566,14 +571,23 @@ export function SettingsScreenV1({ inTabs = false }: { inTabs?: boolean }) {
           currentRate={currentGoalProfile?.weekly_rate_kg ?? 0.5}
           currentHeightCm={profile?.height_cm ?? 175}
           currentWeightKg={latestWeightKg}
+          currentTargetWeightKg={currentGoalProfile?.target_weight_kg ?? undefined}
+          currentDateOfBirth={profile?.date_of_birth ?? undefined}
+          currentActivityLevel={currentGoalProfile?.activity_level ?? 'light'}
           currentSex={profile?.sex ?? 'male'}
+          units={units}
           onSave={async (data) => {
             if (!user?.id) return;
-            await updateProfile({ height_cm: data.heightCm, sex: data.sex });
+            const res = await updateProfile({
+              height_cm: data.heightCm,
+              sex: data.sex,
+              ...(data.dateOfBirth ? { date_of_birth: data.dateOfBirth } : {}),
+            });
+            if (res.error) throw res.error;
             const activityLevel = currentGoalProfile?.activity_level ?? 'light';
             const computed = calculate({
               sex: data.sex,
-              age: deriveAgeYears(profile?.date_of_birth),
+              age: deriveAgeYears(data.dateOfBirth ?? profile?.date_of_birth),
               heightCm: data.heightCm,
               weightKg: data.weightKg,
               activityLevel,
@@ -581,14 +595,17 @@ export function SettingsScreenV1({ inTabs = false }: { inTabs?: boolean }) {
               weeklyRateKg: data.rate,
             });
             const now = new Date().toISOString();
-            await saveGoalProfile({
+            const saved = await saveGoalProfile({
               id: generateClientUuid(),
               user_id: user.id,
               effective_from: now,
               activity_level: activityLevel,
               goal: data.goal,
               weekly_rate_kg: data.rate,
-              target_weight_kg: currentGoalProfile?.target_weight_kg ?? null,
+              target_weight_kg:
+                data.targetWeightKg !== undefined
+                  ? data.targetWeightKg
+                  : (currentGoalProfile?.target_weight_kg ?? null),
               target_date: currentGoalProfile?.target_date ?? null,
               body_fat_percentage: currentGoalProfile?.body_fat_percentage ?? null,
               current_weight_kg: data.weightKg,
@@ -604,6 +621,7 @@ export function SettingsScreenV1({ inTabs = false }: { inTabs?: boolean }) {
               confirmed_at: now,
               created_at: now,
             });
+            if (!saved.success) throw new Error(saved.error || 'SAVE_FAILED');
             await refreshTargets();
           }}
         />
@@ -615,6 +633,8 @@ export function SettingsScreenV1({ inTabs = false }: { inTabs?: boolean }) {
           onClose={() => setShowDailyTargets(false)}
           currentStepGoal={stepGoal}
           currentWaterGoalMl={waterGoalMl}
+          calorieTarget={currentGoalProfile?.daily_calorie_target ?? null}
+          calorieFloor={getCalorieFloor(profile?.sex ?? 'male')}
           onSave={async ({ stepGoal: nextSteps, waterGoalMl: nextWater }) => {
             await updateDailyGoals(nextSteps, nextWater);
           }}
@@ -657,10 +677,22 @@ export function SettingsScreenV1({ inTabs = false }: { inTabs?: boolean }) {
           onClose={() => setShowHealthSync(false)}
           isConnected={isHealthConnected}
           lastSyncedAt={lastSyncedAt}
+          onSyncNow={async () => {
+            if (!isHealthConnected) {
+              const granted = await steps.requestPermission();
+              if (granted) await steps.syncFromPlatform();
+            } else {
+              await steps.syncFromPlatform();
+            }
+            setLastSyncedAt(new Date().toISOString());
+          }}
           onToggleConnection={async (connect) => {
             if (connect) {
               const granted = await steps.requestPermission();
-              if (granted) await steps.syncFromPlatform();
+              if (granted) {
+                await steps.syncFromPlatform();
+                setLastSyncedAt(new Date().toISOString());
+              }
             } else {
               await disconnectNativeHealth();
               await steps.refresh();

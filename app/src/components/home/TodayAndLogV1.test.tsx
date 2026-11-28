@@ -320,6 +320,7 @@ describe('Screens 26–28 Design System v1 Today & Log sheet', () => {
     expect(byId('today-greeting-title').props.children).toBe('Hello, Priya');
     expect(byId('today-upgrade-pill')).toBeTruthy();
     expect(byId('today-coin-pill')).toBeTruthy();
+    expect(tree.root.findAllByProps({ testID: 'today-settings-button' })).toHaveLength(0);
 
     await act(async () => byId('today-upgrade-pill').props.onPress());
     await act(async () => byId('today-coin-pill').props.onPress());

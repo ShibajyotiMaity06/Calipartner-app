@@ -22,6 +22,7 @@ export async function saveMyMeal(
   id: string,
   name: string,
   selection: MealSelection[],
+  defaultMealSection?: MealSection | null,
 ): Promise<void> {
   if (!name.trim() || name.trim().length > 100) throw new Error('INVALID_MEAL');
   const items = savedMealItems(selection);
@@ -34,6 +35,7 @@ export async function saveMyMeal(
       name: name.trim(),
       items,
       ...savedMealTotals(items),
+      ...(defaultMealSection ? { default_meal_section: defaultMealSection } : {}),
       updated_at: new Date().toISOString(),
       deleted_at: null,
     })

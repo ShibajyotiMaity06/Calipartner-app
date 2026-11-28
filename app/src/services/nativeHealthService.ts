@@ -5,10 +5,56 @@ import type { StepPermissionStatus, StepReading } from './stepIntegrationService
 
 const REQUESTED = 'calipartner_health_steps_requested_v1';
 const DISABLED = 'calipartner_health_steps_disabled_v1';
+const PREFS_KEY = 'calipartner_health_sync_prefs_v1';
 const readTypes = [
   'HKQuantityTypeIdentifierStepCount',
   'HKQuantityTypeIdentifierDistanceWalkingRunning',
 ] as const;
+
+export interface HealthSyncPreferences {
+  steps: boolean;
+  weight: boolean;
+  workouts: boolean;
+}
+
+const DEFAULT_SYNC_PREFS: HealthSyncPreferences = {
+  steps: true,
+  weight: true,
+  workouts: true,
+};
+
+export async function getHealthSyncPreferences(): Promise<HealthSyncPreferences> {
+  try {
+    const raw =
+      Platform.OS === 'web'
+        ? typeof localStorage !== 'undefined'
+          ? localStorage.getItem(PREFS_KEY)
+          : null
+        : await SecureStore.getItemAsync(PREFS_KEY);
+    if (!raw) return DEFAULT_SYNC_PREFS;
+    const parsed = JSON.parse(raw) as Partial<HealthSyncPreferences>;
+    return {
+      steps: typeof parsed.steps === 'boolean' ? parsed.steps : true,
+      weight: typeof parsed.weight === 'boolean' ? parsed.weight : true,
+      workouts: typeof parsed.workouts === 'boolean' ? parsed.workouts : true,
+    };
+  } catch {
+    return DEFAULT_SYNC_PREFS;
+  }
+}
+
+export async function setHealthSyncPreferences(next: HealthSyncPreferences): Promise<void> {
+  const encoded = JSON.stringify(next);
+  try {
+    if (Platform.OS === 'web') {
+      if (typeof localStorage !== 'undefined') localStorage.setItem(PREFS_KEY, encoded);
+    } else {
+      await SecureStore.setItemAsync(PREFS_KEY, encoded);
+    }
+  } catch {
+    // non-fatal preference persistence error
+  }
+}
 
 export async function getNativeHealthPermission(): Promise<StepPermissionStatus> {
   if (Platform.OS === 'web') return 'unavailable';

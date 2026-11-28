@@ -980,9 +980,13 @@ export function FoodLogModal({
             <CustomFoodModal
               visible={showCustomFoodModal}
               initialBarcode={prefilledBarcode}
+              defaultSection={targetSection}
               onClose={() => {
                 setShowCustomFoodModal(false);
                 setPrefilledBarcode(null);
+              }}
+              onSaveOnly={() => {
+                void library.refresh();
               }}
               onCreated={handleSelectFood}
             />

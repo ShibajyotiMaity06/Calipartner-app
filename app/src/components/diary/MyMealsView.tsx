@@ -19,6 +19,7 @@ import { getDb } from '@/db';
 import { generateClientUuid } from '@/services/foodService';
 import { deleteMyMeal, loadMyMeals, logMyMeal, saveMyMeal } from '@/services/myMealsService';
 import { t } from '@/i18n';
+import { CreateMealModal } from './CreateMealModal';
 
 export function MyMealsView({
   selection,
@@ -42,6 +43,7 @@ export function MyMealsView({
   const [mealSlot, setMealSlot] = useState(section);
   const [saved, setSaved] = useState(false);
   const [logged, setLogged] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const acting = useRef(false);
   const saveRequest = useRef<{ key: string; id: string } | undefined>(undefined);
   const logRequest = useRef<{ key: string; ids: string[] } | undefined>(undefined);
@@ -97,10 +99,11 @@ export function MyMealsView({
   const log = (meal: SavedMeal) =>
     act(async () => {
       if (!user) return;
-      const key = JSON.stringify([user.id, meal.id, localDate, mealSlot]);
+      const targetSlot = meal.default_meal_section ?? mealSlot;
+      const key = JSON.stringify([user.id, meal.id, localDate, targetSlot]);
       if (logRequest.current?.key !== key)
         logRequest.current = { key, ids: meal.items.map(() => generateClientUuid()) };
-      await logMyMeal(await getDb(), user.id, meal, mealSlot, localDate, logRequest.current.ids);
+      await logMyMeal(await getDb(), user.id, meal, targetSlot, localDate, logRequest.current.ids);
       logRequest.current = undefined;
       setLogged(true);
       onLogged?.();
@@ -113,6 +116,16 @@ export function MyMealsView({
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
+      <SecondaryButton
+        title={
+          selection.length > 0
+            ? t('captureV1.newMealSaveFromSelection', { count: selection.length })
+            : t('captureV1.newMealButton')
+        }
+        onPress={() => setShowCreateModal(true)}
+        testID="btn-open-create-meal"
+      />
+
       {selection.length > 0 ? (
         <View style={styles.saveBox}>
           <TextInput
@@ -199,7 +212,9 @@ export function MyMealsView({
             </View>
             <Button
               variant="secondary"
-              label={t('launch.mealLog', { meal: t(`diary.sections.${mealSlot}`) })}
+              label={t('launch.mealLog', {
+                meal: t(`diary.sections.${meal.default_meal_section ?? mealSlot}`),
+              })}
               disabled={busy}
               onPress={() => void log(meal)}
               testID={`my-meal-log-${meal.id}`}
@@ -226,6 +241,19 @@ export function MyMealsView({
             />
           </View>
         ))}
+
+      {showCreateModal ? (
+        <CreateMealModal
+          visible={showCreateModal}
+          initialSelection={selection}
+          defaultSection={mealSlot}
+          onClose={() => setShowCreateModal(false)}
+          onSaved={() => {
+            setSaved(true);
+            void refresh();
+          }}
+        />
+      ) : null}
     </ScrollView>
   );
 }
